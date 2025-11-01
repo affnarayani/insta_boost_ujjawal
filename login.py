@@ -13,7 +13,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By # Import By
-from selenium.common.exceptions import NoSuchElementException # Import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait # Added for explicit waits
+from selenium.webdriver.support import expected_conditions as EC # Added for explicit waits
+from selenium.common.exceptions import NoSuchElementException, TimeoutException # Import NoSuchElementException and TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Create a variable headless and set it to False by default.
@@ -45,7 +47,7 @@ def read_cookies(file_path):
     with open(file_path, 'r') as f:
         cookies = json.load(f)
     return cookies
-def login_with_cookies(cookies_file):
+def login_to_instagram(username): # Renamed function and added username parameter
     load_dotenv()
     decrypt_key = os.getenv("DECRYPT_KEY")
     if not decrypt_key:
@@ -63,7 +65,7 @@ def login_with_cookies(cookies_file):
         original_cookies = json.loads(decrypted_bytes.decode("utf-8"))
     except InvalidTag:
         print("Error: Invalid decryption key or corrupted cookies file.")
-        return # Exit the function if decryption fails
+        return None # Return None if decryption fails
 
     # Set up Chrome options
     chrome_options = Options()
@@ -81,9 +83,6 @@ def login_with_cookies(cookies_file):
         # Navigate to Instagram
         driver.get("https://www.instagram.com")
 
-        # Load cookies
-        # original_cookies = read_cookies(cookies_file) # This line is no longer needed
-
         # Prepare cookies for Selenium
         cookies_for_selenium = []
         for cookie in original_cookies:
@@ -93,19 +92,14 @@ def login_with_cookies(cookies_file):
                 selenium_cookie['expiry'] = int(selenium_cookie['expirationDate'])
                 del selenium_cookie['expirationDate']
             
-            # Remove 'sameSite' if it's 'unspecified' or 'no_restriction' as Selenium might not like it
-            # Selenium expects 'SameSite' to be 'Strict', 'Lax', or 'None'
             if 'sameSite' in selenium_cookie:
-                # Selenium expects 'SameSite' to be 'Strict', 'Lax', or 'None'
-                # Remove if 'unspecified' or any other invalid value
                 if selenium_cookie['sameSite'] == 'unspecified':
                     del selenium_cookie['sameSite']
                 elif selenium_cookie['sameSite'] == 'no_restriction':
-                    selenium_cookie['sameSite'] = 'None' # 'no_restriction' maps to 'None' in Selenium
+                    selenium_cookie['sameSite'] = 'None'
                 elif selenium_cookie['sameSite'] not in ["Strict", "Lax", "None"]:
-                    del selenium_cookie['sameSite'] # Remove any other invalid sameSite values
+                    del selenium_cookie['sameSite']
             
-            # Remove 'storeId' and 'session' as they are not expected by Selenium
             if 'storeId' in selenium_cookie:
                 del selenium_cookie['storeId']
             if 'session' in selenium_cookie:
@@ -121,47 +115,62 @@ def login_with_cookies(cookies_file):
         print("Cookies loaded and page refreshed.")
         
         # Keep the browser open for a few seconds to verify
-        time.sleep(10)
+        time.sleep(5) # Reduced sleep time
 
-        # Read config.json to get the expected name
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-        expected_name = config[0]['name']
-
-        # Check the XPath for the text value
-        xpath = "/html[1]/body[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/main[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/span[1]/span[1]/div[1]/span[1]"
+        # Check for the specified XPath and click it if it appears
         try:
-            element = driver.find_element(By.XPATH, xpath)
-            found_text = element.text
-            if found_text == expected_name:
-                print(f"Found text: {found_text}")
-                print("Login successful.")
-                
-                # Check for the specified XPath and click it if it appears
-                try:
-                    click_xpath = "/html[1]/body[1]/div[4]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[4]"
-                    element_to_click = driver.find_element(By.XPATH, click_xpath)
-                    element_to_click.click()
-                    print("Clicked the pop-up notification.")
-                    time.sleep(5) # Wait a bit after clicking
-                except NoSuchElementException:
-                    print("XPath element to click not found, skipping click.")
-                except Exception as click_e:
-                    print(f"An unexpected error occurred while trying to click the element: {click_e}")
-
-            else:
-                print(f"Logged into unexpected account. Found text: '{found_text}' does not match expected name: '{expected_name}'")
-        except Exception:
-            print("Login unsuccessful: XPath element not found.")
+            click_xpath = "/html[1]/body[1]/div[4]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[4]"
+            element_to_click = driver.find_element(By.XPATH, click_xpath)
+            element_to_click.click()
+            print("Clicked the pop-up notification.")
+            time.sleep(2) # Wait a bit after clicking
+        except NoSuchElementException:
+            print("XPath element to click not found, skipping click.")
+        except Exception as click_e:
+            print(f"An unexpected error occurred while trying to click the element: {click_e}")
+        
+        # Verify login by checking if the username is present on the page
+        # This is a more robust check than relying on a specific XPath that might change
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, f"//a[contains(@href, '/{username}/')]"))
+            )
+            print(f"Login successful as {username}.")
+            return driver # Return the driver instance
+        except TimeoutException:
+            print(f"Login verification failed for {username}. Username link not found.")
+            driver.quit()
+            return None
 
     except Exception as e:
-        print(f"An error occurred: {e}")
-        # Print the full traceback for better debugging
+        print(f"An error occurred during login: {e}")
         import traceback
         traceback.print_exc()
-    finally:
-        driver.quit()
+        if driver:
+            driver.quit()
+        return None
 
 if __name__ == "__main__":
-    cookies_json_file = "cookies.json.encrypted"
-    login_with_cookies(cookies_json_file)
+    # This block is for testing login.py directly
+    # You would need to provide a username for testing purposes
+    # For example, by reading it from config.json or an environment variable
+    print("Running login.py directly for testing purposes.")
+    # Assuming config.json has a 'username' key at the top level
+    try:
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        test_username = config.get('username')
+        if test_username:
+            driver_instance = login_to_instagram(test_username)
+            if driver_instance:
+                print("Login successful in test mode. Browser will close in 10 seconds.")
+                time.sleep(10)
+                driver_instance.quit()
+            else:
+                print("Login failed in test mode.")
+        else:
+            print("Error: 'username' not found in config.json for testing login.py.")
+    except FileNotFoundError:
+        print("Error: config.json not found.")
+    except Exception as e:
+        print(f"An error occurred during direct login.py execution: {e}")
