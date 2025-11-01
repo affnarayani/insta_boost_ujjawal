@@ -1,0 +1,21 @@
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Environment
+.env
+.venv/
+env/
+venv/
+
+# Sensitive files
+encrypt.py
+password_generator.py
+
+# IDE files
+.vscode/
+.idea/
+
+# Operating System files
+.DS_Store
+Thumbs.db
