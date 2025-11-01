@@ -11,6 +11,7 @@ venv/
 # Sensitive files
 encrypt.py
 password_generator.py
+cookies.json
 
 # IDE files
 .vscode/
