@@ -6,6 +6,9 @@ on:
 jobs:
   login:
     runs-on: ubuntu-latest
+    env:
+      DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -18,9 +21,12 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
+    - name: Create .env file
+      run: |
+        echo "DECRYPT_KEY=${{ secrets.DECRYPT_KEY }}" > .env
+        echo "PAT_TOKEN=${{ secrets.PAT_TOKEN }}" >> .env
+
     - name: Decrypt cookies.json.encrypted
-      env:
-        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
       run: |
         # Assuming you have a decryption script or method
         # This is a placeholder, replace with your actual decryption command
@@ -34,6 +40,4 @@ jobs:
         touch cookies.json
 
     - name: Run login script
-      env:
-        PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: python login.py
