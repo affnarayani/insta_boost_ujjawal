@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import shutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -42,6 +43,20 @@ def save_scraped_posts(posts_data, target_username, filename="scraped_posts.json
                             existing_post_ids.add(post_id)
                 else:
                     print(f"Scraping for a new username '{target_username}'. Clearing previous data for '{loaded_content.get('scraped_username')}' from {filepath}.")
+                    # Empty the 'posts' folder
+                    posts_folder = "posts"
+                    if os.path.exists(posts_folder) and os.path.isdir(posts_folder):
+                        for filename in os.listdir(posts_folder):
+                            file_path = os.path.join(posts_folder, filename)
+                            try:
+                                if os.path.isfile(file_path) or os.path.islink(file_path):
+                                    os.unlink(file_path)
+                                elif os.path.isdir(file_path):
+                                    shutil.rmtree(file_path)
+                                print(f"Removed {file_path}")
+                            except Exception as e:
+                                print(f"Failed to delete {file_path}. Reason: {e}")
+                        print(f"Emptied the '{posts_folder}' folder.")
             except json.JSONDecodeError:
                 print(f"Existing {filepath} is empty or malformed. Starting fresh.")
     
