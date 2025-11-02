@@ -6,6 +6,12 @@
         "username": "kumar.ujjawal247"
     },
     {
-        "scrape_posts_username":"_kumar_yash_"
+        "scrape_posts_username": "_kumar_yash_"
+    },
+    {
+        "scrape_followers_username": "shiv_12_jyotirling"
+    },
+    {
+        "max_followers_to_scrape": 20
     }
 ]
