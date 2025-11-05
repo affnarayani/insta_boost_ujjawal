@@ -19,5 +19,8 @@
     },
     {
         "follower_to_following_ratio": "ratio > 1"
+    },
+    {
+        "unfollow_after_days": 7
     }
 ]
