@@ -12,6 +12,12 @@
         "scrape_followers_username": "shiv_12_jyotirling"
     },
     {
-        "max_followers_to_scrape": 20
+        "max_followers_to_scrape": 25
+    },
+    {
+        "follow_private": false
+    },
+    {
+        "follower_to_following_ratio": "ratio > 1"
     }
 ]

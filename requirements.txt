@@ -1,4 +1,5 @@
 beautifulsoup4
+colorama
 cryptography
 h11==0.16.0
 idna==3.11
