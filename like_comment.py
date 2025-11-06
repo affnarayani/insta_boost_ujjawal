@@ -257,7 +257,7 @@ def main():
                     # Generate a comment using GEMINI_API
                     print(f"{Fore.YELLOW}Analyzing comments and generating a new comment...{Style.RESET_ALL}")
                     try:
-                        prompt = f"Analyze the following Instagram comments and generate a new, relevant, and positive comment. Keep it concise, engaging, and ready for publication. Do not use any asterisk (*) symbols. Comments: {'; '.join(comments)}"
+                        prompt = f"Analyze the following Instagram comments and generate a new, relevant, and positive comment. Keep it concise, engaging, and ready for publication. Do not use any asterisk (*) symbols or emojis. Comments: {'; '.join(comments)}"
                         response = gemini_client.generate_content(contents=prompt)
                         generated_comment = response.text.strip()
                         print(f"{Fore.GREEN}Generated comment: {generated_comment}{Style.RESET_ALL}")
