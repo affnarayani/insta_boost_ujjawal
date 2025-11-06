@@ -59,6 +59,7 @@ def update_followed_unfollowed_json(username_to_store):
     new_entry = {
         f"{username_to_store}_followed": True,
         f"{username_to_store}_unfollowed": False,
+        f"{username_to_store}_liked_commented": False,
         "timestamp": datetime.now().isoformat()
     }
     data.append(new_entry)
