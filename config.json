@@ -22,5 +22,8 @@
     },
     {
         "unfollow_after_days": 7
+    },
+    {
+        "meta_posts_scrape": 10
     }
 ]
