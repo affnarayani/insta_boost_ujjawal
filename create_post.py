@@ -47,7 +47,7 @@ def create_instagram_post(driver, video_path, description):
 
         # Check for "videos are now reels" notification pop-up (optional)
         print("Checking for 'videos are now reels' notification pop-up...", flush=True)
-        reels_notification_button_xpath = "/html/body/div[5]/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/div/div[2]/button"
+        reels_notification_button_xpath = "//button[text()='OK']"
         try:
             reels_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, reels_notification_button_xpath))
