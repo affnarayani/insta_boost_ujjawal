@@ -38,10 +38,10 @@ def download_image(session_obj, image_url, filepath):
         with open(filepath, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-        print(f"Downloaded: {filepath}")
+        print(f"Downloaded: {filepath}", flush=True)
         return True
     except Exception as e:
-        print(f"Error downloading {image_url} to {filepath}: {e}")
+        print(f"Error downloading {image_url} to {filepath}: {e}", flush=True)
         return False
 
 def convert_webp_to_png(webp_path, png_path):
@@ -49,10 +49,10 @@ def convert_webp_to_png(webp_path, png_path):
     try:
         with Image.open(webp_path) as img:
             img.save(png_path, "PNG")
-        print(f"Converted {webp_path} to {png_path}")
+        print(f"Converted {webp_path} to {png_path}", flush=True)
         return True
     except Exception as e:
-        print(f"Error converting {webp_path} to PNG: {e}")
+        print(f"Error converting {webp_path} to PNG: {e}", flush=True)
         return False
 
 def download_instagram_posts():
@@ -60,7 +60,7 @@ def download_instagram_posts():
     posts_folder = 'posts'
     if not os.path.exists(posts_folder):
         os.makedirs(posts_folder)
-        print(f"Created folder: {posts_folder}")
+        print(f"Created folder: {posts_folder}", flush=True)
 
     # Get username from config.json
     username = None
@@ -72,24 +72,24 @@ def download_instagram_posts():
                 username = item['username']
                 break
         if not username:
-            print("Error: 'username' not found in config.json.")
+            print("Error: 'username' not found in config.json.", flush=True)
             return
     except FileNotFoundError:
-        print("Error: config.json not found.")
+        print("Error: config.json not found.", flush=True)
         return
     except json.JSONDecodeError:
-        print("Error: Could not decode config.json. Check file format.")
+        print("Error: Could not decode config.json. Check file format.", flush=True)
         return
 
     # Login and get the Selenium driver
-    print(f"Attempting to log in as {username}...")
+    print(f"Attempting to log in as {username}...", flush=True)
     driver = None
     try:
         driver = login_to_instagram(username)
         if not driver:
-            print("Failed to obtain a valid Selenium driver. Exiting.")
+            print("Failed to obtain a valid Selenium driver. Exiting.", flush=True)
             return
-        print("Successfully obtained Selenium driver.")
+        print("Successfully obtained Selenium driver.", flush=True)
 
         # Create a requests session and add cookies from the Selenium driver
         session_obj = requests.Session()
@@ -101,21 +101,21 @@ def download_instagram_posts():
                 path=cookie['path'],
                 secure=cookie['secure']
             )
-        print("Requests session created with cookies.")
+        print("Requests session created with cookies.", flush=True)
 
         try:
             with open('scraped_posts.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
             posts_to_download = data.get('posts', [])
         except FileNotFoundError:
-            print("Error: scraped_posts.json not found.")
+            print("Error: scraped_posts.json not found.", flush=True)
             return
         except json.JSONDecodeError:
-            print("Error: Could not decode scraped_posts.json. Check file format.")
+            print("Error: Could not decode scraped_posts.json. Check file format.", flush=True)
             return
 
         existing_ids = get_existing_posts(posts_folder)
-        print(f"Found {len(existing_ids)} existing posts in '{posts_folder}'.")
+        print(f"Found {len(existing_ids)} existing posts in '{posts_folder}'.", flush=True)
 
         for post_info in posts_to_download:
             post_url = post_info.get('post_url')
@@ -124,14 +124,14 @@ def download_instagram_posts():
 
             post_id = get_post_id_from_url(post_url)
             if not post_id:
-                print(f"Could not extract post ID from URL: {post_url}")
+                print(f"Could not extract post ID from URL: {post_url}", flush=True)
                 continue
 
             if post_id in existing_ids:
-                print(f"Skipping post {post_id}: Already downloaded.")
+                print(f"Skipping post {post_id}: Already downloaded.", flush=True)
                 continue
 
-            print(f"Processing post: {post_url}")
+            print(f"Processing post: {post_url}", flush=True)
             try:
                 driver.get(post_url)
                 # Wait for the specific div to be present
@@ -160,30 +160,30 @@ def download_instagram_posts():
                             if download_image(session_obj, src_value, webp_filepath):
                                 if convert_webp_to_png(webp_filepath, png_filepath):
                                     os.remove(webp_filepath) # Delete the webp file after conversion
-                                    print(f"Deleted temporary file: {webp_filepath}")
+                                    print(f"Deleted temporary file: {webp_filepath}", flush=True)
                                     existing_ids.add(post_id) # Add to existing_ids after successful download and conversion
                                 else:
-                                    print(f"Failed to convert {webp_filepath} to PNG.")
+                                    print(f"Failed to convert {webp_filepath} to PNG.", flush=True)
                             else:
-                                print(f"Failed to download image for post {post_id}.")
+                                print(f"Failed to download image for post {post_id}.", flush=True)
                         else:
-                            print("src attribute not found in img tag within the _aagv div.")
+                            print("src attribute not found in img tag within the _aagv div.", flush=True)
                     else:
-                        print("Inner div (_aagv) not found within the target div (_aagu).")
+                        print("Inner div (_aagv) not found within the target div (_aagu).", flush=True)
                 else:
-                    print("Target div (_aagu) not found on the page.")
+                    print("Target div (_aagu) not found on the page.", flush=True)
             except TimeoutException:
-                print(f"Timeout waiting for elements on page: {post_url}")
+                print(f"Timeout waiting for elements on page: {post_url}", flush=True)
             except NoSuchElementException:
-                print(f"Specific element not found on page: {post_url}")
+                print(f"Specific element not found on page: {post_url}", flush=True)
             except Exception as e:
-                print(f"An error occurred while processing {post_url}: {e}")
+                print(f"An error occurred while processing {post_url}: {e}", flush=True)
             time.sleep(2) # Be polite and wait a bit between requests
 
     finally:
         if driver:
             driver.quit()
-            print("Browser closed.")
+            print("Browser closed.", flush=True)
 
 if __name__ == "__main__":
     download_instagram_posts()
