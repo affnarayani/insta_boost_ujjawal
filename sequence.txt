@@ -5,3 +5,4 @@ scrape_followers.yml
 follow.yml
 unfollow.yml
 like_comment.yml
+create_post.yml
