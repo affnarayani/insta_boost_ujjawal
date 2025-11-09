@@ -32,19 +32,11 @@ def create_instagram_post(driver, video_path, description):
         print("Clicked 'Post' button in the dropdown.", flush=True)
         time.sleep(15) # Wait for 15 seconds for the dynamic pop-up to appear
 
-        # Click "Select from computer" button in the dynamic pop-up
-        print("Attempting to find and click the 'Select from computer' button...", flush=True)
-        select_from_computer_button_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div[2]/div/button"
-        WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, select_from_computer_button_xpath))
-        ).click()
-        print("Clicked 'Select from computer' button.", flush=True)
-        time.sleep(5)
-
-        # Upload video file
+        # Upload video file directly to the hidden input element
         print(f"Attempting to upload video from: {video_path}", flush=True)
         # The file input element is usually hidden, so we need to find it and send keys to it.
         # This XPath might need to be more specific if there are multiple file inputs.
+        # We are bypassing the click on "Select from computer" as it often causes issues in headless environments.
         file_input_xpath = "//input[@type='file']"
         file_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, file_input_xpath))
