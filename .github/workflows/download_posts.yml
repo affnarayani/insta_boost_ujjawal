@@ -36,7 +36,9 @@ jobs:
 
     - name: Commit and Push changes
       run: |
+        git status
         git add posts/ # Add the posts directory
-        git diff --quiet --exit-code || (git commit -m "Downloaded new Instagram posts" && git push origin ${{ github.ref_name }})
+        git commit -m "Downloaded new Instagram posts" || echo "No changes to commit"
+        git push origin ${{ github.ref_name }}
       env:
         GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} # Use PAT_TOKEN for push
