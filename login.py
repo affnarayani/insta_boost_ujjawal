@@ -117,27 +117,24 @@ def login_to_instagram(username): # Renamed function and added username paramete
         # Keep the browser open for a few seconds to verify
         time.sleep(15) # Reduced sleep time
 
-        # Check for the specified XPath and click it if it appears
-        try:
-            click_xpath = "/html[1]/body[1]/div[4]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[4]"
-            element_to_click = driver.find_element(By.XPATH, click_xpath)
-            element_to_click.click()
-            print("Clicked the pop-up notification.", flush=True)
-            time.sleep(2) # Wait a bit after clicking
-        except NoSuchElementException:
-            print("First XPath element not found, trying fallback XPath.", flush=True)
+        # Try clicking the pop-up notification with dynamic XPath
+        clicked = False
+        for i in range(1, 10): # Try i from 1 to 9
             try:
-                fallback_click_xpath = "/html/body/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]"
-                element_to_click = driver.find_element(By.XPATH, fallback_click_xpath)
+                dynamic_click_xpath = f"/html/body/div[{i}]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]"
+                element_to_click = driver.find_element(By.XPATH, dynamic_click_xpath)
                 element_to_click.click()
-                print("Clicked the pop-up notification using fallback XPath.", flush=True)
+                print(f"Clicked the pop-up notification using XPath with i={i}.", flush=True)
                 time.sleep(2) # Wait a bit after clicking
+                clicked = True
+                break # Exit loop if element is clicked
             except NoSuchElementException:
-                print("Fallback XPath element to click not found, skipping click.", flush=True)
-            except Exception as fallback_click_e:
-                print(f"An unexpected error occurred while trying to click the fallback element: {fallback_click_e}", flush=True)
-        except Exception as click_e:
-            print(f"An unexpected error occurred while trying to click the element: {click_e}", flush=True)
+                print(f"XPath element with i={i} not found, trying next i.", flush=True)
+            except Exception as dynamic_click_e:
+                print(f"An unexpected error occurred while trying to click the element with i={i}: {dynamic_click_e}", flush=True)
+        
+        if not clicked:
+            print("No pop-up notification element found after trying i from 1 to 9, skipping click.", flush=True)
         
         # Verify login by checking if the username is present on the page
         # This is a more robust check than relying on a specific XPath that might change
