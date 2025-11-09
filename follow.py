@@ -66,7 +66,7 @@ def update_followed_unfollowed_json(username_to_store):
 
     with open(file_path, 'w') as f:
         json.dump(data, f, indent=4)
-    print(f"{Fore.GREEN}Successfully recorded follow activity for {username_to_store}.{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}Successfully recorded follow activity for {username_to_store}.{Style.RESET_ALL}", flush=True)
 
 def get_already_followed_users():
     """Reads followed_unfollowed.json and returns a set of usernames already followed."""
@@ -92,23 +92,23 @@ def main():
     instagram_username = config.get('username')
 
     if not instagram_username:
-        print(f"{Fore.RED}Error: Instagram username not found in config.json.{Style.RESET_ALL}")
+        print(f"{Fore.RED}Error: Instagram username not found in config.json.{Style.RESET_ALL}", flush=True)
         return
 
-    print(f"{Fore.CYAN}Attempting to log in to Instagram...{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}Attempting to log in to Instagram...{Style.RESET_ALL}", flush=True)
     driver = login_to_instagram(instagram_username)
     if not driver:
-        print(f"{Fore.RED}Failed to log in. Exiting.{Style.RESET_ALL}")
+        print(f"{Fore.RED}Failed to log in. Exiting.{Style.RESET_ALL}", flush=True)
         return
 
     followers_to_check = read_scraped_followers()
     if not followers_to_check:
-        print(f"{Fore.YELLOW}No followers found in scraped_followers.json to process.{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}No followers found in scraped_followers.json to process.{Style.RESET_ALL}", flush=True)
         driver.quit()
         return
 
     already_followed_users = get_already_followed_users()
-    print(f"{Fore.CYAN}Already followed users: {already_followed_users}{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}Already followed users: {already_followed_users}{Style.RESET_ALL}", flush=True)
 
     followed_one_account = False
     for target_username in followers_to_check:
@@ -116,10 +116,10 @@ def main():
             break # Exit after following one account
 
         if target_username in already_followed_users:
-            print(f"{Fore.YELLOW}Skipping {target_username}: Already followed.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}Skipping {target_username}: Already followed.{Style.RESET_ALL}", flush=True)
             continue
 
-        print(f"\n{Fore.BLUE}Processing profile: {target_username}{Style.RESET_ALL}")
+        print(f"\n{Fore.BLUE}Processing profile: {target_username}{Style.RESET_ALL}", flush=True)
         profile_url = f"https://www.instagram.com/{target_username}/"
         driver.get(profile_url)
         time.sleep(3) # Give time for the page to load
@@ -129,13 +129,13 @@ def main():
             try:
                 driver.find_element(By.XPATH, "//h2[contains(text(), 'This Account is Private')]")
                 is_private = True
-                print(f"{Fore.YELLOW}Account {target_username} is private.{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Account {target_username} is private.{Style.RESET_ALL}", flush=True)
             except NoSuchElementException:
                 is_private = False
-                print(f"{Fore.GREEN}Account {target_username} is public.{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}Account {target_username} is public.{Style.RESET_ALL}", flush=True)
 
             if is_private and not follow_private:
-                print(f"{Fore.YELLOW}Skipping private account {target_username} as per config.{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Skipping private account {target_username} as per config.{Style.RESET_ALL}", flush=True)
                 continue
 
             # Get followers and following counts
@@ -144,9 +144,9 @@ def main():
                     EC.presence_of_element_located((By.XPATH, NUMBER_OF_FOLLOWERS_XPATH))
                 ).text
                 followers_count = parse_number_with_comma(followers_text)
-                print(f"{Fore.MAGENTA}Followers: {followers_count}{Style.RESET_ALL}")
+                print(f"{Fore.MAGENTA}Followers: {followers_count}{Style.RESET_ALL}", flush=True)
             except (NoSuchElementException, TimeoutException):
-                print(f"{Fore.RED}Could not find followers count for {target_username}. Skipping.{Style.RESET_ALL}")
+                print(f"{Fore.RED}Could not find followers count for {target_username}. Skipping.{Style.RESET_ALL}", flush=True)
                 continue
 
             try:
@@ -154,17 +154,17 @@ def main():
                     EC.presence_of_element_located((By.XPATH, NUMBER_OF_FOLLOWING_XPATH))
                 ).text
                 following_count = parse_number_with_comma(following_text)
-                print(f"{Fore.MAGENTA}Following: {following_count}{Style.RESET_ALL}")
+                print(f"{Fore.MAGENTA}Following: {following_count}{Style.RESET_ALL}", flush=True)
             except (NoSuchElementException, TimeoutException):
-                print(f"{Fore.RED}Could not find following count for {target_username}. Skipping.{Style.RESET_ALL}")
+                print(f"{Fore.RED}Could not find following count for {target_username}. Skipping.{Style.RESET_ALL}", flush=True)
                 continue
 
             if following_count == 0:
-                print(f"{Fore.YELLOW}Skipping {target_username}: Following count is zero, cannot calculate ratio.{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Skipping {target_username}: Following count is zero, cannot calculate ratio.{Style.RESET_ALL}", flush=True)
                 continue
 
             ratio = followers_count / following_count
-            print(f"{Fore.MAGENTA}Follower to Following Ratio: {ratio:.2f}{Style.RESET_ALL}")
+            print(f"{Fore.MAGENTA}Follower to Following Ratio: {ratio:.2f}{Style.RESET_ALL}", flush=True)
 
             # Evaluate ratio condition
             condition_met = False
@@ -173,13 +173,13 @@ def main():
                 # Create a dictionary for the local scope of eval
                 eval_globals = {"ratio": ratio}
                 condition_met = eval(ratio_condition_str, {}, eval_globals)
-                print(f"{Fore.CYAN}Condition '{ratio_condition_str}' evaluated to: {condition_met}{Style.RESET_ALL}")
+                print(f"{Fore.CYAN}Condition '{ratio_condition_str}' evaluated to: {condition_met}{Style.RESET_ALL}", flush=True)
             except Exception as e:
-                print(f"{Fore.RED}Error evaluating ratio condition '{ratio_condition_str}': {e}{Style.RESET_ALL}")
+                print(f"{Fore.RED}Error evaluating ratio condition '{ratio_condition_str}': {e}{Style.RESET_ALL}", flush=True)
                 continue
 
             if condition_met:
-                print(f"{Fore.GREEN}Ratio condition met for {target_username}. Attempting to follow.{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}Ratio condition met for {target_username}. Attempting to follow.{Style.RESET_ALL}", flush=True)
                 follow_button_xpath = PRIVATE_ACCOUNT_FOLLOW_BUTTON_XPATH if is_private else PUBLIC_ACCOUNT_FOLLOW_BUTTON_XPATH
                 try:
                     follow_button = WebDriverWait(driver, 10).until(
@@ -187,28 +187,28 @@ def main():
                     )
                     if follow_button.text.lower() == "follow":
                         follow_button.click()
-                        print(f"{Fore.GREEN}Successfully clicked follow button for {target_username}.{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}Successfully clicked follow button for {target_username}.{Style.RESET_ALL}", flush=True)
                         update_followed_unfollowed_json(target_username)
                         followed_one_account = True
                         break # Exit after following one account
                     else:
-                        print(f"{Fore.YELLOW}Follow button not in 'Follow' state for {target_username}. Skipping.{Style.RESET_ALL}")
+                        print(f"{Fore.YELLOW}Follow button not in 'Follow' state for {target_username}. Skipping.{Style.RESET_ALL}", flush=True)
                 except (NoSuchElementException, TimeoutException):
-                    print(f"{Fore.RED}Follow button not found or not clickable for {target_username}. Skipping.{Style.RESET_ALL}")
+                    print(f"{Fore.RED}Follow button not found or not clickable for {target_username}. Skipping.{Style.RESET_ALL}", flush=True)
             else:
-                print(f"{Fore.YELLOW}Ratio condition not met for {target_username}. Skipping.{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Ratio condition not met for {target_username}. Skipping.{Style.RESET_ALL}", flush=True)
 
         except Exception as e:
-            print(f"{Fore.RED}An unexpected error occurred while processing {target_username}: {e}{Style.RESET_ALL}")
+            print(f"{Fore.RED}An unexpected error occurred while processing {target_username}: {e}{Style.RESET_ALL}", flush=True)
             import traceback
             traceback.print_exc()
             continue
     
-    print(f"{Fore.CYAN}Waiting for 15 seconds before closing the browser...{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}Waiting for 15 seconds before closing the browser...{Style.RESET_ALL}", flush=True)
     time.sleep(15) # Wait for 15 seconds after activity
 
     driver.quit()
-    print(f"{Fore.CYAN}Program finished.{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}Program finished.{Style.RESET_ALL}", flush=True)
 
 if __name__ == "__main__":
     main()
