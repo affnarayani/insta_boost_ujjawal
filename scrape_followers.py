@@ -8,7 +8,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from login import login_to_instagram # Import the login function
 
 def scrape_followers(driver, target_username):
-    print(f"Navigating to https://www.instagram.com/{target_username}")
+    print(f"Navigating to https://www.instagram.com/{target_username}", flush=True)
     driver.get(f"https://www.instagram.com/{target_username}")
 
     try:
@@ -26,7 +26,7 @@ def scrape_followers(driver, target_username):
                 EC.presence_of_element_located((By.XPATH, private_account_xpath))
             )
             if "This account is private" in private_account_element.text:
-                print("This account is private. The followers list cannot be scraped.")
+                print("This account is private. The followers list cannot be scraped.", flush=True)
                 return # Exit the function
         except TimeoutException:
             # The private account element was not found, proceed as normal
@@ -35,7 +35,7 @@ def scrape_followers(driver, target_username):
         followers_count_text = followers_link.find_element(By.XPATH, ".//span/span").text if followers_link.find_elements(By.XPATH, ".//span/span") else followers_link.text
         if not followers_count_text: # Fallback if the inner span is not found
             followers_count_text = followers_link.find_element(By.XPATH, ".//span").text
-        print(f"Followers link found: {int(followers_count_text.replace(',', ''))}, clicking it.")
+        print(f"Followers link found: {int(followers_count_text.replace(',', ''))}, clicking it.", flush=True)
         followers_link.click()
         time.sleep(15) # Give some time for the pop-up to appear
 
@@ -45,13 +45,13 @@ def scrape_followers(driver, target_username):
         followers_dialog = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.XPATH, dialog_xpath))
         )
-        print("Followers dialog opened.")
+        print("Followers dialog opened.", flush=True)
 
         scrollable_element_xpath = "/html[1]/body[1]/div[4]/div[2]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[3]"
         scrollable_element = WebDriverWait(followers_dialog, 10).until(
             EC.presence_of_element_located((By.XPATH, scrollable_element_xpath))
         )
-        print("Scrollable element for followers list found.")
+        print("Scrollable element for followers list found.", flush=True)
 
         # Load existing followers from the JSON file if it exists
         output_file = "scraped_followers.json"
@@ -66,15 +66,15 @@ def scrape_followers(driver, target_username):
                 if "max_followers_to_scrape" in item:
                     max_followers_to_scrape = item["max_followers_to_scrape"]
                     break
-            print(f"Max followers to scrape: {max_followers_to_scrape}")
+            print(f"Max followers to scrape: {max_followers_to_scrape}", flush=True)
         except FileNotFoundError:
-            print("Error: config.json not found. Cannot determine max_followers_to_scrape.")
+            print("Error: config.json not found. Cannot determine max_followers_to_scrape.", flush=True)
             return
         except json.JSONDecodeError:
-            print("Error: config.json is malformed. Cannot determine max_followers_to_scrape.")
+            print("Error: config.json is malformed. Cannot determine max_followers_to_scrape.", flush=True)
             return
         except Exception as e:
-            print(f"An error occurred while reading config.json: {e}")
+            print(f"An error occurred while reading config.json: {e}", flush=True)
             return
         
         # Check if scraped_followers.json exists and load its content
@@ -91,32 +91,32 @@ def scrape_followers(driver, target_username):
                         # If usernames match, load existing followers
                         if "followers" in data and isinstance(data["followers"], list):
                             existing_followers.update(data["followers"])
-                        print(f"Loaded {len(existing_followers)} existing followers for {target_username} from {output_file}.")
+                        print(f"Loaded {len(existing_followers)} existing followers for {target_username} from {output_file}.", flush=True)
                     else:
                         # If usernames don't match, clear the file content
                         with open(output_file, 'w', encoding='utf-8') as f:
                             json.dump({}, f) # Write an empty JSON object
-                        print(f"Cleared {output_file} as target username '{target_username}' does not match previously scraped username '{username_scraped_in_file}'.")
+                        print(f"Cleared {output_file} as target username '{target_username}' does not match previously scraped username '{username_scraped_in_file}'.", flush=True)
                 else:
-                    print(f"Warning: {output_file} is empty. Starting with an empty list.")
+                    print(f"Warning: {output_file} is empty. Starting with an empty list.", flush=True)
 
             except json.JSONDecodeError:
-                print(f"Warning: {output_file} is malformed. Clearing and starting with an empty list.")
+                print(f"Warning: {output_file} is malformed. Clearing and starting with an empty list.", flush=True)
                 with open(output_file, 'w', encoding='utf-8') as f:
                     json.dump({}, f) # Clear the file
             except Exception as e:
-                print(f"Error processing {output_file}: {e}. Starting with an empty list.")
+                print(f"Error processing {output_file}: {e}. Starting with an empty list.", flush=True)
                 with open(output_file, 'w', encoding='utf-8') as f:
                     json.dump({}, f) # Clear the file
         else:
-            print(f"{output_file} not found. A new file will be created.")
+            print(f"{output_file} not found. A new file will be created.", flush=True)
 
         scraped_followers = existing_followers.copy() # Initialize with existing followers
         followers_to_scrape_count = max_followers_to_scrape - len(existing_followers)
-        print(f"Need to scrape {followers_to_scrape_count} more followers.")
+        print(f"Need to scrape {followers_to_scrape_count} more followers.", flush=True)
 
         if followers_to_scrape_count <= 0:
-            print(f"Already have {len(existing_followers)} followers, which is >= max_followers_to_scrape ({max_followers_to_scrape}). No new followers will be scraped.")
+            print(f"Already have {len(existing_followers)} followers, which is >= max_followers_to_scrape ({max_followers_to_scrape}). No new followers will be scraped.", flush=True)
             return # Exit if no more followers are needed
 
         last_height = driver.execute_script("return arguments[0].scrollHeight", scrollable_element)
@@ -135,10 +135,10 @@ def scrape_followers(driver, target_username):
                     if username and not username.startswith("See all"): # Filter out "See all" or similar non-username texts
                         if username not in scraped_followers:
                             scraped_followers.add(username)
-                            print(f"Appended new follower: {username}")
+                            print(f"Appended new follower: {username}", flush=True)
                             
                             if len(scraped_followers) >= max_followers_to_scrape:
-                                print(f"Reached max_followers_to_scrape ({max_followers_to_scrape}). Stopping scraping.")
+                                print(f"Reached max_followers_to_scrape ({max_followers_to_scrape}). Stopping scraping.", flush=True)
                                 # Save the current list and break
                                 output_data = {
                                     "username_scraped": target_username,
@@ -146,7 +146,7 @@ def scrape_followers(driver, target_username):
                                 }
                                 with open(output_file, 'w', encoding='utf-8') as f:
                                     json.dump(output_data, f, ensure_ascii=False, indent=4)
-                                print(f"Saved {len(scraped_followers)} followers to {output_file}.")
+                                print(f"Saved {len(scraped_followers)} followers to {output_file}.", flush=True)
                                 return # Exit the function after saving
                             
                             # Immediately save the updated list to JSON if not yet at max
@@ -156,7 +156,7 @@ def scrape_followers(driver, target_username):
                             }
                             with open(output_file, 'w', encoding='utf-8') as f:
                                 json.dump(output_data, f, ensure_ascii=False, indent=4)
-                            print(f"Saved {len(scraped_followers)} followers to {output_file}.")
+                            print(f"Saved {len(scraped_followers)} followers to {output_file}.", flush=True)
                 except StaleElementReferenceException:
                     pass # Element might have become stale during scrolling
 
@@ -166,20 +166,20 @@ def scrape_followers(driver, target_username):
 
             new_height = driver.execute_script("return arguments[0].scrollHeight", scrollable_element)
             if new_height == last_height:
-                print("Reached the bottom of the followers list.")
+                print("Reached the bottom of the followers list.", flush=True)
                 break
             last_height = new_height
-            print(f"Scraped {len(scraped_followers)} followers so far. Scrolling down...")
+            print(f"Scraped {len(scraped_followers)} followers so far. Scrolling down...", flush=True)
 
-        print(f"Finished scraping. Total unique followers found: {len(scraped_followers)}")
-        print(f"Final list of scraped followers saved to {output_file}")
+        print(f"Finished scraping. Total unique followers found: {len(scraped_followers)}", flush=True)
+        print(f"Final list of scraped followers saved to {output_file}", flush=True)
 
     except TimeoutException:
-        print("Timeout: Followers link or dialog not found within the expected time.")
+        print("Timeout: Followers link or dialog not found within the expected time.", flush=True)
     except NoSuchElementException as e:
-        print(f"Element not found: {e}")
+        print(f"Element not found: {e}", flush=True)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An unexpected error occurred: {e}", flush=True)
     finally:
         if driver:
             driver.quit()
@@ -210,11 +210,11 @@ if __name__ == "__main__":
         if driver_instance:
             scrape_followers(driver_instance, scrape_followers_username)
         else:
-            print("Failed to get a driver instance. Exiting.")
+            print("Failed to get a driver instance. Exiting.", flush=True)
 
     except FileNotFoundError:
-        print("Error: config.json not found.")
+        print("Error: config.json not found.", flush=True)
     except ValueError as ve:
-        print(f"Configuration Error: {ve}")
+        print(f"Configuration Error: {ve}", flush=True)
     except Exception as e:
-        print(f"An error occurred during the main execution: {e}")
+        print(f"An error occurred during the main execution: {e}", flush=True)
