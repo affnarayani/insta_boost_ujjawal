@@ -42,7 +42,7 @@ def save_scraped_posts(posts_data, target_username, filename="scraped_posts.json
                         if post_id:
                             existing_post_ids.add(post_id)
                 else:
-                    print(f"Scraping for a new username '{target_username}'. Clearing previous data for '{loaded_content.get('scraped_username')}' from {filepath}.")
+                    print(f"Scraping for a new username '{target_username}'. Clearing previous data for '{loaded_content.get('scraped_username')}' from {filepath}.", flush=True)
                     # Empty the 'posts' folder
                     posts_folder = "posts"
                     if os.path.exists(posts_folder) and os.path.isdir(posts_folder):
@@ -53,12 +53,12 @@ def save_scraped_posts(posts_data, target_username, filename="scraped_posts.json
                                     os.unlink(file_path)
                                 elif os.path.isdir(file_path):
                                     shutil.rmtree(file_path)
-                                print(f"Removed {file_path}")
+                                print(f"Removed {file_path}", flush=True)
                             except Exception as e:
-                                print(f"Failed to delete {file_path}. Reason: {e}")
-                        print(f"Emptied the '{posts_folder}' folder.")
+                                print(f"Failed to delete {file_path}. Reason: {e}", flush=True)
+                        print(f"Emptied the '{posts_folder}' folder.", flush=True)
             except json.JSONDecodeError:
-                print(f"Existing {filepath} is empty or malformed. Starting fresh.")
+                print(f"Existing {filepath} is empty or malformed. Starting fresh.", flush=True)
     
     new_unique_posts = []
     for post in posts_data:
@@ -71,7 +71,7 @@ def save_scraped_posts(posts_data, target_username, filename="scraped_posts.json
 
     with open(filepath, 'w') as f:
         json.dump(file_content, f, indent=4)
-    print(f"Saved {len(new_unique_posts)} new posts to {filepath}. Total posts for {target_username}: {len(file_content['posts'])}")
+    print(f"Saved {len(new_unique_posts)} new posts to {filepath}. Total posts for {target_username}: {len(file_content['posts'])}", flush=True)
 
 def scrape_posts_only(driver, target_username):
     profile_url = f"https://www.instagram.com/{target_username}/"
@@ -82,10 +82,10 @@ def scrape_posts_only(driver, target_username):
             EC.presence_of_element_located((By.XPATH, "//img[contains(@alt, 'profile picture')]"))
         )
     except TimeoutException:
-        print(f"Could not load profile page for {target_username}. It might be private or not exist.")
+        print(f"Could not load profile page for {target_username}. It might be private or not exist.", flush=True)
         return
 
-    print(f"Starting to scrape posts for {target_username} as we scroll...")
+    print(f"Starting to scrape posts for {target_username} as we scroll...", flush=True)
     
     last_height = driver.execute_script("return document.body.scrollHeight")
     
@@ -127,19 +127,19 @@ def scrape_posts_only(driver, target_username):
         if new_posts_to_save:
             save_scraped_posts(new_posts_to_save, target_username)
             total_scraped_count += len(new_posts_to_save)
-            print(f"Currently scraped {total_scraped_count} new unique post URLs in this session.")
+            print(f"Currently scraped {total_scraped_count} new unique post URLs in this session.", flush=True)
 
         # Calculate new scroll height and compare with last scroll height
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
-            print("Reached end of scrollable content.")
+            print("Reached end of scrollable content.", flush=True)
             break
         last_height = new_height
 
-    print(f"Finished scraping. Total new unique post URLs found in this session: {total_scraped_count}")
+    print(f"Finished scraping. Total new unique post URLs found in this session: {total_scraped_count}", flush=True)
 
     if total_scraped_count == 0 and not existing_post_ids_from_file:
-        print("No posts found. This might be due to an empty profile, privacy settings, or a change in Instagram's HTML structure.")
+        print("No posts found. This might be due to an empty profile, privacy settings, or a change in Instagram's HTML structure.", flush=True)
 
 
 def main():
@@ -148,19 +148,19 @@ def main():
     scrape_posts_username = config.get('scrape_posts_username')
 
     if not username or not scrape_posts_username:
-        print("Error: 'username' or 'scrape_posts_username' not found in config.json")
+        print("Error: 'username' or 'scrape_posts_username' not found in config.json", flush=True)
         return
 
-    print(f"Attempting to log in as {username}...")
+    print(f"Attempting to log in as {username}...", flush=True)
     driver = login_to_instagram(username) # Call the login function from login.py
 
     if driver:
-        print(f"Successfully logged in. Scraping posts for {scrape_posts_username}...")
+        print(f"Successfully logged in. Scraping posts for {scrape_posts_username}...", flush=True)
         scrape_posts_only(driver, scrape_posts_username)
-        print("Scraping complete.")
+        print("Scraping complete.", flush=True)
         driver.quit()
     else:
-        print("Login failed. Exiting.")
+        print("Login failed. Exiting.", flush=True)
 
 if __name__ == "__main__":
     main()

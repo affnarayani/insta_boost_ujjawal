@@ -64,7 +64,7 @@ def login_to_instagram(username): # Renamed function and added username paramete
         decrypted_bytes = _decrypt_bytes(encrypted_payload, decrypt_key)
         original_cookies = json.loads(decrypted_bytes.decode("utf-8"))
     except InvalidTag:
-        print("Error: Invalid decryption key or corrupted cookies file.")
+        print("Error: Invalid decryption key or corrupted cookies file.", flush=True)
         return None # Return None if decryption fails
 
     # Set up Chrome options
@@ -112,7 +112,7 @@ def login_to_instagram(username): # Renamed function and added username paramete
         
         # Refresh page to apply cookies
         driver.refresh()
-        print("Cookies loaded and page refreshed.")
+        print("Cookies loaded and page refreshed.", flush=True)
         
         # Keep the browser open for a few seconds to verify
         time.sleep(15) # Reduced sleep time
@@ -122,22 +122,22 @@ def login_to_instagram(username): # Renamed function and added username paramete
             click_xpath = "/html[1]/body[1]/div[4]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[4]"
             element_to_click = driver.find_element(By.XPATH, click_xpath)
             element_to_click.click()
-            print("Clicked the pop-up notification.")
+            print("Clicked the pop-up notification.", flush=True)
             time.sleep(2) # Wait a bit after clicking
         except NoSuchElementException:
-            print("First XPath element not found, trying fallback XPath.")
+            print("First XPath element not found, trying fallback XPath.", flush=True)
             try:
                 fallback_click_xpath = "/html/body/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]"
                 element_to_click = driver.find_element(By.XPATH, fallback_click_xpath)
                 element_to_click.click()
-                print("Clicked the pop-up notification using fallback XPath.")
+                print("Clicked the pop-up notification using fallback XPath.", flush=True)
                 time.sleep(2) # Wait a bit after clicking
             except NoSuchElementException:
-                print("Fallback XPath element to click not found, skipping click.")
+                print("Fallback XPath element to click not found, skipping click.", flush=True)
             except Exception as fallback_click_e:
-                print(f"An unexpected error occurred while trying to click the fallback element: {fallback_click_e}")
+                print(f"An unexpected error occurred while trying to click the fallback element: {fallback_click_e}", flush=True)
         except Exception as click_e:
-            print(f"An unexpected error occurred while trying to click the element: {click_e}")
+            print(f"An unexpected error occurred while trying to click the element: {click_e}", flush=True)
         
         # Verify login by checking if the username is present on the page
         # This is a more robust check than relying on a specific XPath that might change
@@ -145,15 +145,15 @@ def login_to_instagram(username): # Renamed function and added username paramete
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, f"//a[contains(@href, '/{username}/')]"))
             )
-            print(f"Login successful as {username}.")
+            print(f"Login successful as {username}.", flush=True)
             return driver # Return the driver instance
         except TimeoutException:
-            print(f"Login verification failed for {username}. Username link not found.")
+            print(f"Login verification failed for {username}. Username link not found.", flush=True)
             driver.quit()
             return None
 
     except Exception as e:
-        print(f"An error occurred during login: {e}")
+        print(f"An error occurred during login: {e}", flush=True)
         import traceback
         traceback.print_exc()
         if driver:
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     # This block is for testing login.py directly
     # You would need to provide a username for testing purposes
     # For example, by reading it from config.json or an environment variable
-    print("Running login.py directly for testing purposes.")
+    print("Running login.py directly for testing purposes.", flush=True)
     # Assuming config.json has a 'username' key at the top level
     try:
         with open('config.json', 'r') as f:
@@ -178,14 +178,14 @@ if __name__ == "__main__":
         if test_username:
             driver_instance = login_to_instagram(test_username)
             if driver_instance:
-                print("Login successful in test mode. Browser will close in 10 seconds.")
+                print("Login successful in test mode. Browser will close in 10 seconds.", flush=True)
                 time.sleep(10)
                 driver_instance.quit()
             else:
-                print("Login failed in test mode.")
+                print("Login failed in test mode.", flush=True)
         else:
-            print("Error: 'username' not found in config.json for testing login.py.")
+            print("Error: 'username' not found in config.json for testing login.py.", flush=True)
     except FileNotFoundError:
-        print("Error: config.json not found.")
+        print("Error: config.json not found.", flush=True)
     except Exception as e:
-        print(f"An error occurred during direct login.py execution: {e}")
+        print(f"An error occurred during direct login.py execution: {e}", flush=True)
