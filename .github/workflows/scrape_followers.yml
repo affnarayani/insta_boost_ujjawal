@@ -1,0 +1,42 @@
+name: 4. Scrape Instagram Followers
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_username:
+        description: 'Instagram username to scrape followers from'
+        required: true
+        default: ''
+
+jobs:
+  scrape-followers:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }} # Use PAT_TOKEN for checkout to allow push later
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x' # Use the latest Python 3 version
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run scrape_followers.py
+      env:
+        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }} # Pass DECRYPT_KEY as an environment variable
+      run: python scrape_followers.py
+
+    - name: Commit and push changes
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add scraped_followers.json
+        git commit -m "Update scraped_followers.json with latest data" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} # Use PAT_TOKEN for pushing changes
