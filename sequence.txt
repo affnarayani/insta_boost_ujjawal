@@ -1,3 +1,3 @@
 pindownload_and_process.yml
 scrape_posts.yml
-download_posts.py
+download_posts.yml

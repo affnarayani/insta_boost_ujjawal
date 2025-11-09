@@ -1,0 +1,42 @@
+name: Download Instagram Posts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download-posts:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }} # Use PAT_TOKEN for checkout to allow push later
+
+    - name: Configure Git
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Pull latest changes
+      run: git pull origin ${{ github.ref_name }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x' # Use a suitable Python version
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run download_posts.py
+      env:
+        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }} # Pass DECRYPT_KEY as an environment variable
+      run: python download_posts.py
+
+    - name: Commit and Push changes
+      run: |
+        git add posts/ # Add the posts directory
+        git diff --quiet --exit-code || (git commit -m "Downloaded new Instagram posts" && git push origin ${{ github.ref_name }})
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} # Use PAT_TOKEN for push
