@@ -1,0 +1,39 @@
+name: 7. Like and Comment Instagram Posts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  like_comment:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        fetch-depth: 0 # Fetch all history for persistence
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run like_comment.py
+      env:
+        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python like_comment.py
+
+    - name: Commit and Push changes
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "github-actions@github.com"
+        git add config.json followed_unfollowed.json cookies.json.encrypted # Add all potentially modified files
+        git commit -m "Automated: Update config.json, followed_unfollowed.json, and cookies.json.encrypted after like/comment run" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
