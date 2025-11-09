@@ -22,14 +22,11 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
-    - name: Load environment variables
-      run: |
-        echo "DECRYPT_KEY=${{ secrets.DECRYPT_KEY }}" >> $GITHUB_ENV
-        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
-      shell: bash
-
     - name: Run create_post.py
       run: python create_post.py
+      env:
+        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     - name: Commit and Push changes
       run: |
