@@ -65,6 +65,22 @@ def reorder_user_dict_keys(user_dict, username, post_url=None):
     reordered_dict = {key: user_dict[key] for key in ordered_keys if key in user_dict}
     return reordered_dict
 
+def get_new_posts_from_current_view(driver, seen_post_urls):
+    """
+    Finds all post URLs currently visible on the page and returns only those
+    that have not been seen before. Assumes the driver is already on the user's profile.
+    """
+    new_post_urls = []
+    post_elements = driver.find_elements(By.XPATH, "//a[contains(@href, '/p/')]")
+    
+    for element in post_elements:
+        href = element.get_attribute('href')
+        if href and href not in seen_post_urls:
+            new_post_urls.append(href)
+            seen_post_urls.add(href) # Add to seen_post_urls immediately
+    
+    return new_post_urls
+
 def read_config():
     """Reads the config.json file and returns its content as a dictionary."""
     with open('config.json', 'r') as f:
@@ -106,32 +122,6 @@ def extract_post_id(post_url):
         post_id_part = parts[1].split('/')[0]
         return post_id_part
     return None
-
-def get_first_post_url(driver, target_username):
-    """
-    Navigates to the user's profile and retrieves the URL of the first visible post.
-    Does not scroll or save to scraped_posts.json.
-    """
-    profile_url = f"https://www.instagram.com/{target_username}/"
-    driver.get(profile_url)
-
-    try:
-        # Wait for the profile page to load, specifically looking for a post link
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/p/')]"))
-        )
-        # Find the first post element
-        post_element = driver.find_element(By.XPATH, "//a[contains(@href, '/p/')]")
-        return post_element.get_attribute('href')
-    except TimeoutException:
-        print(f"{Fore.YELLOW}No posts found or profile is private for {target_username}.{Style.RESET_ALL}", flush=True)
-        return None
-    except NoSuchElementException:
-        print(f"{Fore.YELLOW}No post elements found on profile page for {target_username}.{Style.RESET_ALL}", flush=True)
-        return None
-    except Exception as e:
-        print(f"{Fore.RED}Error getting first post URL for {target_username}: {e}{Style.RESET_ALL}", flush=True)
-        return None
 
 def main():
     print(f"{Fore.CYAN}Starting like_comment.py script...{Style.RESET_ALL}", flush=True)
@@ -191,12 +181,14 @@ def main():
                     if not user_dict.get(liked_commented_key, False): # Check within the current user_dict
                         print(f"{Fore.BLUE}Found user '{username}' to process.{Style.RESET_ALL}", flush=True)
 
-                        # Get the first post URL for the user
-                        print(f"{Fore.YELLOW}Attempting to get the first post URL for {username}...{Style.RESET_ALL}", flush=True)
-                        post_to_process = get_first_post_url(browser, username)
-                        
-                        if not post_to_process:
-                            print(f"{Fore.YELLOW}No valid post URL found for {username}. Skipping.{Style.RESET_ALL}", flush=True)
+                        profile_url = f"https://www.instagram.com/{username}/"
+                        browser.get(profile_url)
+                        try:
+                            WebDriverWait(browser, 10).until(
+                                EC.presence_of_element_located((By.XPATH, "//img[contains(@alt, 'profile picture')]"))
+                            )
+                        except TimeoutException:
+                            print(f"{Fore.YELLOW}Could not load profile page for {username}. It might be private or not exist. Skipping user.{Style.RESET_ALL}", flush=True)
                             updated_user_dict = reorder_user_dict_keys(user_dict, username, None)
                             for i, item in enumerate(followed_data):
                                 if item is user_dict:
@@ -204,47 +196,175 @@ def main():
                                     break
                             with open('followed_unfollowed.json', 'w') as f:
                                 json.dump(followed_data, f, indent=4)
-                            continue
+                            user_processed = True
+                            break # Move to the next user
 
-                        print(f"{Fore.BLUE}Navigating to post: {post_to_process}{Style.RESET_ALL}", flush=True)
-                        browser.get(post_to_process)
-                        time.sleep(5) # Wait for page to load
+                        attempted_posts_for_user = set()
+                        found_commentable_post = False
+                        last_scroll_height = 0
+                        posts_checked_count = 0
+                        MAX_POSTS_TO_CHECK = 10
 
-                        # Like the post
-                        try:
-                            print(f"{Fore.YELLOW}Attempting to like the post...{Style.RESET_ALL}", flush=True)
-                            like_button = WebDriverWait(browser, 10).until(
-                                EC.element_to_be_clickable((By.XPATH, LIKE_BUTTON_XPATH))
-                            )
-                            like_button.click()
-                            print(f"{Fore.GREEN}Post liked successfully.{Style.RESET_ALL}", flush=True)
-                            time.sleep(5) # Added 5 seconds delay
-                        except TimeoutException:
-                            print(f"{Fore.RED}Like button not found or not clickable. Post might already be liked or XPath changed.{Style.RESET_ALL}", flush=True)
-                        except Exception as e:
-                            print(f"{Fore.RED}Error liking post: {e}{Style.RESET_ALL}", flush=True)
+                        while True:
+                            # Navigate to the profile page if not already there (after returning from a post)
+                            if browser.current_url != profile_url:
+                                browser.get(profile_url)
+                                time.sleep(3) # Wait for profile to load
 
-                        # Scrape previous comments
-                        comments = []
-                        print(f"{Fore.YELLOW}Scraping previous comments...{Style.RESET_ALL}", flush=True)
-                        for i, xpath in enumerate(COMMENT_XPATHS):
-                            try:
-                                comment_element = WebDriverWait(browser, 2).until(
-                                    EC.presence_of_element_located((By.XPATH, xpath))
-                                )
-                                comments.append(comment_element.text)
-                                print(f"{Fore.MAGENTA}Comment {i+1}: {comment_element.text}{Style.RESET_ALL}", flush=True)
-                            except TimeoutException:
-                                print(f"{Fore.YELLOW}Less than 6 comments or no more comments found.{Style.RESET_ALL}", flush=True)
-                                break
-                            except Exception as e:
-                                print(f"{Fore.RED}Error scraping comment {i+1}: {e}{Style.RESET_ALL}", flush=True)
-                                break
-                        time.sleep(5) # Added 5 seconds delay
-                        
-                        if not comments:
-                            print(f"{Fore.YELLOW}No comments found on this post. Skipping this post and user.{Style.RESET_ALL}", flush=True)
-                            updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
+                            # Scroll down to bottom
+                            browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                            time.sleep(3) # Wait for new content to load
+
+                            current_scroll_height = browser.execute_script("return document.body.scrollHeight")
+                            if current_scroll_height == last_scroll_height:
+                                print(f"{Fore.YELLOW}Reached end of scrollable content for {username}. No more posts to check.{Style.RESET_ALL}", flush=True)
+                                break # No more posts to scroll for this user
+                            last_scroll_height = current_scroll_height
+
+                            new_posts_from_view = get_new_posts_from_current_view(browser, attempted_posts_for_user)
+                            
+                            if not new_posts_from_view:
+                                print(f"{Fore.YELLOW}No new posts found in current view for {username}. Scrolling further.{Style.RESET_ALL}", flush=True)
+                                # Check if we've already checked MAX_POSTS_TO_CHECK unique posts
+                                if posts_checked_count >= MAX_POSTS_TO_CHECK:
+                                    print(f"{Fore.YELLOW}Checked {MAX_POSTS_TO_CHECK} posts for {username} without finding a commentable one. Skipping user.{Style.RESET_ALL}", flush=True)
+                                    break # Exit while loop, user will be skipped
+                                continue # Scroll further to find new posts
+
+                            for post_to_process in new_posts_from_view:
+                                if posts_checked_count >= MAX_POSTS_TO_CHECK:
+                                    print(f"{Fore.YELLOW}Reached maximum of {MAX_POSTS_TO_CHECK} posts to check for {username}. Skipping remaining posts for this user.{Style.RESET_ALL}", flush=True)
+                                    break # Exit inner for loop, user will be skipped
+                                
+                                posts_checked_count += 1
+                                print(f"{Fore.BLUE}Navigating to post ({posts_checked_count}/{MAX_POSTS_TO_CHECK}): {post_to_process}{Style.RESET_ALL}", flush=True)
+                                browser.get(post_to_process)
+                                time.sleep(5) # Wait for page to load
+
+                                # Scrape previous comments
+                                comments = [] # Initialize comments here
+                                print(f"{Fore.YELLOW}Scraping previous comments...{Style.RESET_ALL}", flush=True)
+                                for i, xpath in enumerate(COMMENT_XPATHS):
+                                    try:
+                                        comment_element = WebDriverWait(browser, 2).until(
+                                            EC.presence_of_element_located((By.XPATH, xpath))
+                                        )
+                                        comments.append(comment_element.text)
+                                        print(f"{Fore.MAGENTA}Comment {i+1}: {comment_element.text}{Style.RESET_ALL}", flush=True)
+                                    except TimeoutException:
+                                        print(f"{Fore.YELLOW}Less than 6 comments or no more comments found.{Style.RESET_ALL}", flush=True)
+                                        break
+                                    except Exception as e:
+                                        print(f"{Fore.RED}Error scraping comment {i+1}: {e}{Style.RESET_ALL}", flush=True)
+                                        break
+                                time.sleep(5) # Added 5 seconds delay
+                                
+                                if not comments:
+                                    print(f"{Fore.YELLOW}No comments found on this post. Skipping this post and trying another for the same user.{Style.RESET_ALL}", flush=True)
+                                    # Navigate back to the profile to continue scraping for other posts
+                                    browser.get(profile_url)
+                                    time.sleep(3)
+                                    continue # Try the next post for the same user
+
+                                # If comments are found, proceed to like, generate and post a comment
+                                # Like the post (conditional liking)
+                                try:
+                                    print(f"{Fore.YELLOW}Attempting to like the post...{Style.RESET_ALL}", flush=True)
+                                    like_button = WebDriverWait(browser, 10).until(
+                                        EC.element_to_be_clickable((By.XPATH, LIKE_BUTTON_XPATH))
+                                    )
+                                    like_button.click()
+                                    print(f"{Fore.GREEN}Post liked successfully.{Style.RESET_ALL}", flush=True)
+                                    time.sleep(5) # Added 5 seconds delay
+                                except TimeoutException:
+                                    print(f"{Fore.RED}Like button not found or not clickable. Post might already be liked or XPath changed.{Style.RESET_ALL}", flush=True)
+                                except Exception as e:
+                                    print(f"{Fore.RED}Error liking post: {e}{Style.RESET_ALL}", flush=True)
+
+                                # Generate a comment using GEMINI_API
+                                print(f"{Fore.YELLOW}Analyzing comments and generating a new comment...{Style.RESET_ALL}", flush=True)
+                                try:
+                                    prompt = f"Analyze the following Instagram comments and generate a new, relevant, and positive comment. Keep it concise, engaging, and ready for publication. Do not use any asterisk (*) symbols or emojis. Comments: {'; '.join(comments)}"
+                                    response = gemini_client.generate_content(contents=prompt)
+                                    generated_comment = response.text.strip()
+                                    print(f"{Fore.GREEN}Generated comment: {generated_comment}{Style.RESET_ALL}", flush=True)
+                                except Exception as e:
+                                    print(f"{Fore.RED}Error generating comment with GEMINI_API: {e}. Using a default comment.{Style.RESET_ALL}", flush=True)
+                                    generated_comment = "Great post!"
+                                time.sleep(5) # Added 5 seconds delay
+
+                                # Post the comment
+                                try:
+                                    print(f"{Fore.YELLOW}Attempting to post the comment...{Style.RESET_ALL}", flush=True)
+                                    # Re-locate comment_textarea before interacting
+                                    comment_textarea = WebDriverWait(browser, 10).until(
+                                        EC.presence_of_element_located((By.CSS_SELECTOR, COMMENT_TEXTAREA_CSS_SELECTOR))
+                                    )
+                                    comment_textarea.click()
+                                    time.sleep(1) # Small delay after click to allow DOM to settle
+                                    # Re-locate comment_textarea after clicking it, as the DOM might have changed
+                                    comment_textarea = WebDriverWait(browser, 10).until(
+                                        EC.presence_of_element_located((By.CSS_SELECTOR, COMMENT_TEXTAREA_CSS_SELECTOR))
+                                    )
+                                    for char in generated_comment:
+                                        comment_textarea.send_keys(char)
+                                        time.sleep(0.1) # Simulate human typing speed
+                                    time.sleep(2) # Wait for the post button to enable
+
+                                    # Re-locate post_button before interacting
+                                    post_button = WebDriverWait(browser, 10).until(
+                                        EC.element_to_be_clickable((By.XPATH, POST_BUTTON_XPATH))
+                                    )
+                                    post_button.click()
+                                    print(f"{Fore.GREEN}Comment posted successfully.{Style.RESET_ALL}", flush=True)
+                                    time.sleep(5) # Wait for comment to be posted
+
+                                    # Update followed_unfollowed.json after successful comment
+                                    print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} after successful comment...{Style.RESET_ALL}", flush=True)
+                                    updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
+                                    for i, item in enumerate(followed_data):
+                                        if item is user_dict:
+                                            followed_data[i] = updated_user_dict
+                                            break
+                                    with open('followed_unfollowed.json', 'w') as f:
+                                        json.dump(followed_data, f, indent=4)
+                                    print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}", flush=True)
+                                    found_commentable_post = True
+                                    user_processed = True
+                                    break # Exit post loop, move to next user
+
+                                except TimeoutException as e:
+                                    if "textarea[placeholder='Add a comment…']" in str(e):
+                                        print(f"{Fore.RED}Error: Comment text area not found or not clickable. CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR}. XPath Fallback: {COMMENT_TEXTAREA_FALLBACK_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
+                                    elif POST_BUTTON_XPATH in str(e):
+                                        print(f"{Fore.RED}Error: Post button not found or not clickable. XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
+                                    else:
+                                        print(f"{Fore.RED}Timeout error while posting comment: {e}{Style.RESET_ALL}", flush=True)
+                                except StaleElementReferenceException as e:
+                                    print(f"{Fore.RED}Stale element reference error while posting comment. This often means the page changed after an element was found. The problematic locators are likely: CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR} or XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
+                                except Exception as e:
+                                    print(f"{Fore.RED}Error posting comment: {e}{Style.RESET_ALL}", flush=True)
+                                    # In case of an error, still mark the user as processed to avoid re-attempting the same problematic post
+                                    print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} due to error...{Style.RESET_ALL}", flush=True)
+                                    updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
+                                    for i, item in enumerate(followed_data):
+                                        if item is user_dict:
+                                            followed_data[i] = updated_user_dict
+                                            break
+                                    with open('followed_unfollowed.json', 'w') as f:
+                                        json.dump(followed_data, f, indent=4)
+                                    print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}", flush=True)
+                                    found_commentable_post = True # Mark as true to break out of post loop
+                                    user_processed = True
+                                    break # Exit post loop, move to next user
+                            
+                            if found_commentable_post:
+                                break # Exit the while True loop if a commentable post was found
+
+                        if not found_commentable_post:
+                            print(f"{Fore.YELLOW}No commentable posts found for {username} after checking all available posts. Skipping user.{Style.RESET_ALL}", flush=True)
+                            # Mark user as processed if no commentable posts were found
+                            updated_user_dict = reorder_user_dict_keys(user_dict, username, "NA")
                             for i, item in enumerate(followed_data):
                                 if item is user_dict:
                                     followed_data[i] = updated_user_dict
@@ -252,83 +372,8 @@ def main():
                             with open('followed_unfollowed.json', 'w') as f:
                                 json.dump(followed_data, f, indent=4)
                             user_processed = True
-                            break # Exit after processing one user
-                        
-                    # Generate a comment using GEMINI_API
-                    print(f"{Fore.YELLOW}Analyzing comments and generating a new comment...{Style.RESET_ALL}", flush=True)
-                    try:
-                        prompt = f"Analyze the following Instagram comments and generate a new, relevant, and positive comment. Keep it concise, engaging, and ready for publication. Do not use any asterisk (*) symbols or emojis. Comments: {'; '.join(comments)}"
-                        response = gemini_client.generate_content(contents=prompt)
-                        generated_comment = response.text.strip()
-                        print(f"{Fore.GREEN}Generated comment: {generated_comment}{Style.RESET_ALL}", flush=True)
-                    except Exception as e:
-                        print(f"{Fore.RED}Error generating comment with GEMINI_API: {e}. Using a default comment.{Style.RESET_ALL}", flush=True)
-                        generated_comment = "Great post!"
-                    time.sleep(5) # Added 5 seconds delay
+                            break # Move to the next user
 
-                    # Post the comment
-                    try:
-                        print(f"{Fore.YELLOW}Attempting to post the comment...{Style.RESET_ALL}", flush=True)
-                        # Re-locate comment_textarea before interacting
-                        comment_textarea = WebDriverWait(browser, 10).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, COMMENT_TEXTAREA_CSS_SELECTOR))
-                        )
-                        comment_textarea.click()
-                        time.sleep(1) # Small delay after click to allow DOM to settle
-                        # Re-locate comment_textarea after clicking it, as the DOM might have changed
-                        comment_textarea = WebDriverWait(browser, 10).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, COMMENT_TEXTAREA_CSS_SELECTOR))
-                        )
-                        for char in generated_comment:
-                            comment_textarea.send_keys(char)
-                            time.sleep(0.1) # Simulate human typing speed
-                        time.sleep(2) # Wait for the post button to enable
-
-                        # Re-locate post_button before interacting
-                        post_button = WebDriverWait(browser, 10).until(
-                            EC.element_to_be_clickable((By.XPATH, POST_BUTTON_XPATH))
-                        )
-                        post_button.click()
-                        print(f"{Fore.GREEN}Comment posted successfully.{Style.RESET_ALL}", flush=True)
-                        time.sleep(5) # Wait for comment to be posted
-
-                        # Update followed_unfollowed.json after successful comment
-                        print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} after successful comment...{Style.RESET_ALL}", flush=True)
-                        updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
-                        for i, item in enumerate(followed_data):
-                            if item is user_dict:
-                                followed_data[i] = updated_user_dict
-                                break
-                        with open('followed_unfollowed.json', 'w') as f:
-                            json.dump(followed_data, f, indent=4)
-                        print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}", flush=True)
-                        user_processed = True
-                        break # Exit after processing one user
-
-                    except TimeoutException as e:
-                        if "textarea[placeholder='Add a comment…']" in str(e):
-                            print(f"{Fore.RED}Error: Comment text area not found or not clickable. CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR}. XPath Fallback: {COMMENT_TEXTAREA_FALLBACK_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
-                        elif POST_BUTTON_XPATH in str(e):
-                            print(f"{Fore.RED}Error: Post button not found or not clickable. XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
-                        else:
-                            print(f"{Fore.RED}Timeout error while posting comment: {e}{Style.RESET_ALL}", flush=True)
-                    except StaleElementReferenceException as e:
-                        print(f"{Fore.RED}Stale element reference error while posting comment. This often means the page changed after an element was found. The problematic locators are likely: CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR} or XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
-                    except Exception as e:
-                        print(f"{Fore.RED}Error posting comment: {e}{Style.RESET_ALL}", flush=True)
-                        # In case of an error, still mark the user as processed to avoid re-attempting the same problematic post
-                        print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} due to error...{Style.RESET_ALL}", flush=True)
-                        updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
-                        for i, item in enumerate(followed_data):
-                            if item is user_dict:
-                                followed_data[i] = updated_user_dict
-                                break
-                        with open('followed_unfollowed.json', 'w') as f:
-                            json.dump(followed_data, f, indent=4)
-                        print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}", flush=True)
-                        user_processed = True
-                        break # Exit after processing one user
-                
                 if user_processed:
                     break # Exit the inner loop if a user was processed
             
