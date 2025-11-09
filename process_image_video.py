@@ -12,7 +12,7 @@ def clear_folder(folder_path):
     """
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-        print(f"Created folder: {folder_path}")
+        print(f"Created folder: {folder_path}", flush=True)
         return
 
     for filename in os.listdir(folder_path):
@@ -24,10 +24,10 @@ def clear_folder(folder_path):
                 # If there are subdirectories, remove them recursively
                 import shutil
                 shutil.rmtree(file_path)
-            print(f"Cleared {file_path}")
+            print(f"Cleared {file_path}", flush=True)
         except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
-    print(f"Folder '{folder_path}' cleared.")
+            print(f"Failed to delete {file_path}. Reason: {e}", flush=True)
+    print(f"Folder '{folder_path}' cleared.", flush=True)
 
 def filter_and_delete_images(image_folder="images"):
     """
@@ -38,7 +38,7 @@ def filter_and_delete_images(image_folder="images"):
     - Image has a width greater than its height (landscape orientation)
     """
     if not os.path.exists(image_folder):
-        print(f"Error: Image folder '{image_folder}' not found.")
+        print(f"Error: Image folder '{image_folder}' not found.", flush=True)
         return
 
     deleted_count = 0
@@ -78,12 +78,12 @@ def filter_and_delete_images(image_folder="images"):
                     img.close()  # Explicitly close the image file
                     os.remove(filepath)
                     deleted_count += 1
-                    print(f"Deleted '{filename}' (W:{width}, H:{height}) because: {', '.join(reasons)}")
+                    print(f"Deleted '{filename}' (W:{width}, H:{height}) because: {', '.join(reasons)}", flush=True)
 
         except Exception as e:
-            print(f"Could not process image '{filename}': {e}")
+            print(f"Could not process image '{filename}': {e}", flush=True)
 
-    print(f"\nFinished filtering. Total images deleted: {deleted_count}")
+    print(f"\nFinished filtering. Total images deleted: {deleted_count}", flush=True)
 
 def resize_images(input_folder="images", output_folder="resized_images", size=(720, 1280)):
     """
@@ -103,9 +103,9 @@ def resize_images(input_folder="images", output_folder="resized_images", size=(7
                     # Resize the image without maintaining aspect ratio (squeeze/stretch)
                     resized_img = img.resize(size, Image.LANCZOS)
                     resized_img.save(output_path)
-                print(f"Resized {filename} to {size[0]}x{size[1]} and saved to {output_folder}")
+                print(f"Resized {filename} to {size[0]}x{size[1]} and saved to {output_folder}", flush=True)
             except Exception as e:
-                print(f"Error processing {filename}: {e}")
+                print(f"Error processing {filename}: {e}", flush=True)
 
 def create_video_from_image(image_path, output_dir="videos", duration=5, background_music_path=None, music_start_time=0):
     """
@@ -119,7 +119,7 @@ def create_video_from_image(image_path, output_dir="videos", duration=5, backgro
         music_start_time (int, optional): Time in seconds from which the music should start in the video.
     """
     if not os.path.exists(image_path):
-        print(f"Error: Image file not found at {image_path}")
+        print(f"Error: Image file not found at {image_path}", flush=True)
         return
 
     os.makedirs(output_dir, exist_ok=True)
@@ -142,19 +142,19 @@ def create_video_from_image(image_path, output_dir="videos", duration=5, backgro
     ]
 
     try:
-        print(f"Creating video from {image_path}...")
+        print(f"Creating video from {image_path}...", flush=True)
         subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(f"Video created successfully: {output_video_path_no_audio}")
+        print(f"Video created successfully: {output_video_path_no_audio}", flush=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error creating video: {e}")
-        print(f"ffmpeg stdout: {e.stdout.decode()}")
-        print(f"ffmpeg stderr: {e.stderr.decode()}")
+        print(f"Error creating video: {e}", flush=True)
+        print(f"ffmpeg stdout: {e.stdout.decode()}", flush=True)
+        print(f"ffmpeg stderr: {e.stderr.decode()}", flush=True)
         return
     except FileNotFoundError:
-        print("Error: ffmpeg not found. Please ensure ffmpeg is installed and in your system's PATH.")
+        print("Error: ffmpeg not found. Please ensure ffmpeg is installed and in your system's PATH.", flush=True)
         return
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An unexpected error occurred: {e}", flush=True)
         return
 
     if background_music_path and os.path.exists(background_music_path):
@@ -175,60 +175,60 @@ def create_video_from_image(image_path, output_dir="videos", duration=5, backgro
 
             final_video = video_clip.set_audio(final_audio)
 
-            print(f"Adding background music from {music_start_time}s to video...")
+            print(f"Adding background music from {music_start_time}s to video...", flush=True)
             final_video.write_videofile(final_output_video_path, codec="libx264", audio_codec="aac")
-            print(f"Video with music created successfully: {final_output_video_path}")
+            print(f"Video with music created successfully: {final_output_video_path}", flush=True)
 
             # Clean up the intermediate video without audio
             os.remove(output_video_path_no_audio)
 
         except Exception as e:
-            print(f"Error adding background music: {e}")
+            print(f"Error adding background music: {e}", flush=True)
     else:
-        print(f"No background music added. Music file not found or path not provided: {background_music_path}")
+        print(f"No background music added. Music file not found or path not provided: {background_music_path}", flush=True)
         # If no music, just rename the no-audio video to the final name
         os.rename(output_video_path_no_audio, final_output_video_path)
 
 
 def main():
     # Clear output folders at the beginning
-    print("Clearing resized_images and videos folders...")
+    print("Clearing resized_images and videos folders...", flush=True)
     clear_folder("resized_images")
     clear_folder("videos")
-    print("Folders cleared. Waiting for 5 seconds for visual confirmation...")
+    print("Folders cleared. Waiting for 5 seconds for visual confirmation...", flush=True)
     time.sleep(5) # Wait for 5 seconds
-    print("Resuming program execution.")
+    print("Resuming program execution.", flush=True)
 
     # Step 1: Filter and delete images
-    print("Starting image filtering...")
+    print("Starting image filtering...", flush=True)
     filter_and_delete_images(image_folder="images")
-    print("Image filtering completed.")
+    print("Image filtering completed.", flush=True)
 
     # Step 2: Resize images
-    print("\nStarting image resizing...")
+    print("\nStarting image resizing...", flush=True)
     resize_images(input_folder="images", output_folder="resized_images", size=(720, 1280))
-    print("Image resizing completed.")
+    print("Image resizing completed.", flush=True)
 
     # Step 3: Create video from resized images
-    print("\nStarting video creation...")
+    print("\nStarting video creation...", flush=True)
     resized_images_dir = "resized_images"
     background_music_file = "background_music/bell.mp3"
     
     if not os.path.exists(resized_images_dir):
-        print(f"Error: Directory '{resized_images_dir}' not found for video creation.")
+        print(f"Error: Directory '{resized_images_dir}' not found for video creation.", flush=True)
         sys.exit(1)
 
     image_files = [f for f in os.listdir(resized_images_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
     image_files.sort() # Ensure consistent order
 
     if not image_files:
-        print(f"No image files found in '{resized_images_dir}' for video creation.")
+        print(f"No image files found in '{resized_images_dir}' for video creation.", flush=True)
         sys.exit(0)
 
     for image_file in image_files:
         image_path = os.path.join(resized_images_dir, image_file)
         create_video_from_image(image_path, duration=5, background_music_path=background_music_file, music_start_time=1)
-    print("Video creation completed for all images.")
+    print("Video creation completed for all images.", flush=True)
 
 if __name__ == "__main__":
     main()

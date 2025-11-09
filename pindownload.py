@@ -16,7 +16,7 @@ HEADLESS = True # Set to True for headless mode, False for headful mode
 
 def download_pinterest_board_images(username, board_name):
     board_url = f"https://in.pinterest.com/{username}/{board_name}/"
-    print(f"Fetching board: {board_url}")
+    print(f"Fetching board: {board_url}", flush=True)
 
     # Set up Selenium WebDriver
     chrome_options = Options()
@@ -36,11 +36,11 @@ def download_pinterest_board_images(username, board_name):
             EC.presence_of_element_located((By.TAG_NAME, "body"))
         )
     except TimeoutException:
-        print(f"Timeout while loading the board URL: {board_url}")
+        print(f"Timeout while loading the board URL: {board_url}", flush=True)
         driver.quit()
         return
     except Exception as e:
-        print(f"Error fetching the board URL with Selenium: {e}")
+        print(f"Error fetching the board URL with Selenium: {e}", flush=True)
         driver.quit()
         return
 
@@ -52,7 +52,7 @@ def download_pinterest_board_images(username, board_name):
         # Scroll down to bottom
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         scroll_count += 1
-        print(f"Scrolled {scroll_count} times.")
+        print(f"Scrolled {scroll_count} times.", flush=True)
 
         # Wait to load page
         time.sleep(3)
@@ -66,7 +66,7 @@ def download_pinterest_board_images(username, board_name):
         # Check for "More like this" section
         more_like_this_section = soup.find('div', string=re.compile(r'More like this', re.IGNORECASE))
         if more_like_this_section:
-            print("Reached 'More like this' section. Waiting 5 seconds before stopping scraping.")
+            print("Reached 'More like this' section. Waiting 5 seconds before stopping scraping.", flush=True)
             time.sleep(5) # Wait for 5 seconds as requested
             break
 
@@ -96,29 +96,29 @@ def download_pinterest_board_images(username, board_name):
                 original_url = re.sub(r'/(564x|236x|736x|474x|600x)/', '/originals/', data_src)
                 image_urls.add(original_url)
         
-        print(f"Images found so far: {len(image_urls)}")
+        print(f"Images found so far: {len(image_urls)}", flush=True)
 
         if new_height == last_height:
-            print("No more content to scroll. Stopping.")
+            print("No more content to scroll. Stopping.", flush=True)
             break
         last_height = new_height
     
     driver.quit()
 
     if not image_urls:
-        print("No image URLs found on the board page using any method. Make sure the username and board name are correct and the board is public.")
+        print("No image URLs found on the board page using any method. Make sure the username and board name are correct and the board is public.", flush=True)
         return
 
     # Create a directory to save images
     save_directory = "images"
     if os.path.exists(save_directory):
-        print(f"Clearing existing images in: {save_directory}")
+        print(f"Clearing existing images in: {save_directory}", flush=True)
         shutil.rmtree(save_directory)
     os.makedirs(save_directory, exist_ok=True)
-    print(f"Saving images to: {save_directory}")
+    print(f"Saving images to: {save_directory}", flush=True)
 
     total_images = len(image_urls)
-    print(f"Found {total_images} images.")
+    print(f"Found {total_images} images.", flush=True)
 
     for i, img_url in enumerate(image_urls):
         try:
@@ -131,9 +131,9 @@ def download_pinterest_board_images(username, board_name):
             with open(filename, 'wb') as f:
                 for chunk in img_response.iter_content(1024):
                     f.write(chunk)
-            print(f"Downloading {i+1}/{total_images}: {filename}")
+            print(f"Downloading {i+1}/{total_images}: {filename}", flush=True)
         except requests.exceptions.RequestException as e:
-            print(f"Error downloading {img_url}: {e}")
+            print(f"Error downloading {img_url}: {e}", flush=True)
 
 import json
 
@@ -142,10 +142,10 @@ def main():
         with open('config.json', 'r') as f:
             config = json.load(f)
     except FileNotFoundError:
-        print("Error: config.json not found. Please make sure it exists in the same directory.")
+        print("Error: config.json not found. Please make sure it exists in the same directory.", flush=True)
         return
     except json.JSONDecodeError:
-        print("Error: Could not decode config.json. Please check its format.")
+        print("Error: Could not decode config.json. Please check its format.", flush=True)
         return
 
     pinterest_config = next((item for item in config if "pinterest_username_board" in item), None)
@@ -153,12 +153,12 @@ def main():
     if pinterest_config and "pinterest_username_board" in pinterest_config:
         username_board = pinterest_config["pinterest_username_board"]
         if '/' not in username_board:
-            print("Invalid format for 'pinterest_username_board' in config.json. Please use username/boardname.")
+            print("Invalid format for 'pinterest_username_board' in config.json. Please use username/boardname.", flush=True)
             return
         username, board_name = username_board.split('/', 1)
         download_pinterest_board_images(username.strip(), board_name.strip())
     else:
-        print("Error: 'pinterest_username_board' not found in config.json.")
+        print("Error: 'pinterest_username_board' not found in config.json.", flush=True)
 
 if __name__ == "__main__":
     main()
