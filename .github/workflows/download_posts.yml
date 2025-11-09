@@ -1,4 +1,4 @@
-name: Download Instagram Posts
+name: 3. Download Instagram Posts
 
 on:
   workflow_dispatch:
