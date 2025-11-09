@@ -6,6 +6,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from login import login_to_instagram # Import the login function
+from dotenv import load_dotenv
+import google.generativeai as genai
 
 def create_instagram_post(driver, video_path, description):
     try:
@@ -161,6 +163,25 @@ if __name__ == "__main__":
 
     driver = None
     try:
+        # Load environment variables
+        load_dotenv()
+        GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+        if not GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY not found in .env file.")
+
+        genai.configure(api_key=GEMINI_API_KEY)
+        client = genai.GenerativeModel("gemini-2.5-flash")
+
+        # Generate description using Gemini API
+        prompt = "Generate an Instagram post description in max 12 words, in Hinglish, without inverted commas, asterisks, or emojis. Also, provide relevant hashtags. The context for all posts is: iss Instagram account mein main mahakaal aur jyotirling ke photos / videos upload karta hoon. har post aisa hi hone wala hai."
+        
+        print("Generating description using Gemini API...")
+        response = client.generate_content(prompt)
+        generated_description = response.text.strip()
+        
+        print(f"Generated Description: {generated_description}")
+
         driver = login_to_instagram(username)
         if driver:
             print("Login successful. Proceeding to create post.")
@@ -171,7 +192,7 @@ if __name__ == "__main__":
             
             if video_files:
                 first_video_path = os.path.join(videos_folder, video_files[0])
-                description = "hello everyone!"
+                description = generated_description
                 
                 print(f"Uploading video: {first_video_path}")
                 success = create_instagram_post(driver, first_video_path, description)
@@ -190,6 +211,10 @@ if __name__ == "__main__":
                 print(f"No video files found in the '{videos_folder}' folder.")
         else:
             print("Login failed. Cannot proceed with post creation.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         if driver:
             print("Waiting for 15 seconds before closing the browser.")
