@@ -56,18 +56,10 @@ def create_instagram_post(driver, video_path, description):
             print("Clicked button in 'videos are now reels' pop-up.", flush=True)
             time.sleep(5)
 
-        except (TimeoutException, NoSuchElementException):
-            print("'Videos are now reels' pop-up did not appear or button not found. Checking for 'OK' button...", flush=True)
-            ok_button_xpath = "/html/body/div[5]/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]"
-            try:
-                ok_button = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, f"{ok_button_xpath}//*[text()='OK']"))
-                )
-                ok_button.click()
-                print("Clicked 'OK' button in pop-up.", flush=True)
-                time.sleep(5)
-            except (TimeoutException, NoSuchElementException):
-                print("'OK' button not found within the specified XPath.", flush=True)
+        except TimeoutException:
+            print("'Videos are now reels' pop-up did not appear or button not found, or resize/original buttons not found.", flush=True)
+        except NoSuchElementException:
+            print("'Videos are now reels' pop-up did not appear or button not found.", flush=True)
 
         # Locate and click the image resize button
         print("Attempting to find and click the image resize button...", flush=True)
