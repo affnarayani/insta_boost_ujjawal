@@ -9,8 +9,7 @@
     {
         "_pradeep_067_followed": true,
         "_pradeep_067_unfollowed": true,
-        "_pradeep_067_liked_commented": true,
-        "_pradeep_067_liked_commented_url": "NA",
+        "_pradeep_067_liked_commented": false,
         "timestamp": "2025-11-09T19:09:33.637506"
     }
 ]

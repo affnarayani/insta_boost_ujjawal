@@ -234,7 +234,8 @@ def main():
                             for post_to_process in new_posts_from_view:
                                 if posts_checked_count >= MAX_POSTS_TO_CHECK:
                                     print(f"{Fore.YELLOW}Reached maximum of {MAX_POSTS_TO_CHECK} posts to check for {username}. Skipping remaining posts for this user.{Style.RESET_ALL}", flush=True)
-                                    break # Exit inner for loop, user will be skipped
+                                    user_processed = True # Mark user as processed to break outer while loop
+                                    break # Exit inner for loop
                                 
                                 posts_checked_count += 1
                                 print(f"{Fore.BLUE}Navigating to post ({posts_checked_count}/{MAX_POSTS_TO_CHECK}): {post_to_process}{Style.RESET_ALL}", flush=True)
@@ -358,11 +359,11 @@ def main():
                                     user_processed = True
                                     break # Exit post loop, move to next user
                             
-                            if found_commentable_post:
-                                break # Exit the while True loop if a commentable post was found
+                            if found_commentable_post or user_processed: # Added user_processed to break if limit reached in inner loop
+                                break # Exit the while True loop if a commentable post was found or limit reached
 
-                        if not found_commentable_post:
-                            print(f"{Fore.YELLOW}No commentable posts found for {username} after checking all available posts. Skipping user.{Style.RESET_ALL}", flush=True)
+                        if not found_commentable_post: # This block is executed if no commentable post was found after checking all available posts or reaching the limit
+                            print(f"{Fore.YELLOW}No commentable posts found for {username} after checking all available posts or reaching the limit. Skipping user.{Style.RESET_ALL}", flush=True)
                             # Mark user as processed if no commentable posts were found
                             updated_user_dict = reorder_user_dict_keys(user_dict, username, "NA")
                             for i, item in enumerate(followed_data):
