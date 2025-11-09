@@ -84,10 +84,10 @@ def check_accounts_left_to_process(username):
         with open('followed_unfollowed.json', 'r') as f:
             followed_data = json.load(f)
     except FileNotFoundError:
-        print(f"{Fore.RED}Error: followed_unfollowed.json not found.{Style.RESET_ALL}")
+        print(f"{Fore.RED}Error: followed_unfollowed.json not found.{Style.RESET_ALL}", flush=True)
         return False
     except json.JSONDecodeError:
-        print(f"{Fore.RED}Error: Could not decode followed_unfollowed.json. Please check if it's a valid JSON file.{Style.RESET_ALL}")
+        print(f"{Fore.RED}Error: Could not decode followed_unfollowed.json. Please check if it's a valid JSON file.{Style.RESET_ALL}", flush=True)
         return False
 
     for user_dict in followed_data:
@@ -124,63 +124,63 @@ def get_first_post_url(driver, target_username):
         post_element = driver.find_element(By.XPATH, "//a[contains(@href, '/p/')]")
         return post_element.get_attribute('href')
     except TimeoutException:
-        print(f"{Fore.YELLOW}No posts found or profile is private for {target_username}.{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}No posts found or profile is private for {target_username}.{Style.RESET_ALL}", flush=True)
         return None
     except NoSuchElementException:
-        print(f"{Fore.YELLOW}No post elements found on profile page for {target_username}.{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}No post elements found on profile page for {target_username}.{Style.RESET_ALL}", flush=True)
         return None
     except Exception as e:
-        print(f"{Fore.RED}Error getting first post URL for {target_username}: {e}{Style.RESET_ALL}")
+        print(f"{Fore.RED}Error getting first post URL for {target_username}: {e}{Style.RESET_ALL}", flush=True)
         return None
 
 def main():
-    print(f"{Fore.CYAN}Starting like_comment.py script...{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}Starting like_comment.py script...{Style.RESET_ALL}", flush=True)
 
     browser = None
     gemini_client = None
 
     try:
         # Read config.json to get the username
-        print(f"{Fore.YELLOW}Reading config.json to get username...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Reading config.json to get username...{Style.RESET_ALL}", flush=True)
         config = read_config()
         username = config.get('username')
         if not username:
             raise ValueError("Username not found in config.json")
-        print(f"{Fore.GREEN}Successfully loaded username: {username} from config.json.{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Successfully loaded username: {username} from config.json.{Style.RESET_ALL}", flush=True)
 
         # Check if there are accounts left to process before launching the browser
-        print(f"{Fore.YELLOW}Checking for accounts left to like/comment...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Checking for accounts left to like/comment...{Style.RESET_ALL}", flush=True)
         if not check_accounts_left_to_process(username):
-            print(f"{Fore.GREEN}No accounts left to like and comment. Exiting.{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}No accounts left to like and comment. Exiting.{Style.RESET_ALL}", flush=True)
             return
-        print(f"{Fore.GREEN}Accounts found to like/comment. Proceeding with login.{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Accounts found to like/comment. Proceeding with login.{Style.RESET_ALL}", flush=True)
 
         # Step 1: Use instagram login session from login.py
-        print(f"{Fore.YELLOW}Logging in to Instagram...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Logging in to Instagram...{Style.RESET_ALL}", flush=True)
         browser = login_to_instagram(username)
         if not browser:
-            print(f"{Fore.RED}Failed to log in to Instagram. Exiting.{Style.RESET_ALL}")
+            print(f"{Fore.RED}Failed to log in to Instagram. Exiting.{Style.RESET_ALL}", flush=True)
             return
-        print(f"{Fore.GREEN}Successfully logged in to Instagram.{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Successfully logged in to Instagram.{Style.RESET_ALL}", flush=True)
 
         # Step 2: Read followed_unfollowed.json to understand its structure
-        print(f"{Fore.YELLOW}Reading followed_unfollowed.json to understand data structure...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Reading followed_unfollowed.json to understand data structure...{Style.RESET_ALL}", flush=True)
         with open('followed_unfollowed.json', 'r') as f:
             followed_data = json.load(f)
-        print(f"{Fore.GREEN}Successfully loaded followed_unfollowed.json.{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Successfully loaded followed_unfollowed.json.{Style.RESET_ALL}", flush=True)
 
         # Step 3: Read scrape_posts.py to understand post scraping and private account detection
         # Initialize GEMINI_API client
         try:
             genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
             gemini_client = genai.GenerativeModel('gemini-2.5-flash')
-            print(f"{Fore.GREEN}GEMINI_API client initialized with model 'gemini-2.5-flash'.{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}GEMINI_API client initialized with model 'gemini-2.5-flash'.{Style.RESET_ALL}", flush=True)
         except Exception as e:
-            print(f"{Fore.RED}Error initializing GEMINI_API client: {e}{Style.RESET_ALL}")
-            print(f"{Fore.RED}Please ensure 'google-generativeai' is installed and GEMINI_API_KEY is set in .env.{Style.RESET_ALL}")
+            print(f"{Fore.RED}Error initializing GEMINI_API client: {e}{Style.RESET_ALL}", flush=True)
+            print(f"{Fore.RED}Please ensure 'google-generativeai' is installed and GEMINI_API_KEY is set in .env.{Style.RESET_ALL}", flush=True)
             return
 
-        print(f"{Fore.YELLOW}Searching for users to like/comment...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Searching for users to like/comment...{Style.RESET_ALL}", flush=True)
         user_processed = False
         for user_dict in followed_data: # Iterate through the list of user dictionaries
             for username_key, user_data_value in list(user_dict.items()): # Iterate through items of each user dictionary
@@ -189,14 +189,14 @@ def main():
                     liked_commented_key = f"{username}_liked_commented"
 
                     if not user_dict.get(liked_commented_key, False): # Check within the current user_dict
-                        print(f"{Fore.BLUE}Found user '{username}' to process.{Style.RESET_ALL}")
+                        print(f"{Fore.BLUE}Found user '{username}' to process.{Style.RESET_ALL}", flush=True)
 
                         # Get the first post URL for the user
-                        print(f"{Fore.YELLOW}Attempting to get the first post URL for {username}...{Style.RESET_ALL}")
+                        print(f"{Fore.YELLOW}Attempting to get the first post URL for {username}...{Style.RESET_ALL}", flush=True)
                         post_to_process = get_first_post_url(browser, username)
                         
                         if not post_to_process:
-                            print(f"{Fore.YELLOW}No valid post URL found for {username}. Skipping.{Style.RESET_ALL}")
+                            print(f"{Fore.YELLOW}No valid post URL found for {username}. Skipping.{Style.RESET_ALL}", flush=True)
                             updated_user_dict = reorder_user_dict_keys(user_dict, username, None)
                             for i, item in enumerate(followed_data):
                                 if item is user_dict:
@@ -206,44 +206,44 @@ def main():
                                 json.dump(followed_data, f, indent=4)
                             continue
 
-                        print(f"{Fore.BLUE}Navigating to post: {post_to_process}{Style.RESET_ALL}")
+                        print(f"{Fore.BLUE}Navigating to post: {post_to_process}{Style.RESET_ALL}", flush=True)
                         browser.get(post_to_process)
                         time.sleep(5) # Wait for page to load
 
                         # Like the post
                         try:
-                            print(f"{Fore.YELLOW}Attempting to like the post...{Style.RESET_ALL}")
+                            print(f"{Fore.YELLOW}Attempting to like the post...{Style.RESET_ALL}", flush=True)
                             like_button = WebDriverWait(browser, 10).until(
                                 EC.element_to_be_clickable((By.XPATH, LIKE_BUTTON_XPATH))
                             )
                             like_button.click()
-                            print(f"{Fore.GREEN}Post liked successfully.{Style.RESET_ALL}")
+                            print(f"{Fore.GREEN}Post liked successfully.{Style.RESET_ALL}", flush=True)
                             time.sleep(5) # Added 5 seconds delay
                         except TimeoutException:
-                            print(f"{Fore.RED}Like button not found or not clickable. Post might already be liked or XPath changed.{Style.RESET_ALL}")
+                            print(f"{Fore.RED}Like button not found or not clickable. Post might already be liked or XPath changed.{Style.RESET_ALL}", flush=True)
                         except Exception as e:
-                            print(f"{Fore.RED}Error liking post: {e}{Style.RESET_ALL}")
+                            print(f"{Fore.RED}Error liking post: {e}{Style.RESET_ALL}", flush=True)
 
                         # Scrape previous comments
                         comments = []
-                        print(f"{Fore.YELLOW}Scraping previous comments...{Style.RESET_ALL}")
+                        print(f"{Fore.YELLOW}Scraping previous comments...{Style.RESET_ALL}", flush=True)
                         for i, xpath in enumerate(COMMENT_XPATHS):
                             try:
                                 comment_element = WebDriverWait(browser, 2).until(
                                     EC.presence_of_element_located((By.XPATH, xpath))
                                 )
                                 comments.append(comment_element.text)
-                                print(f"{Fore.MAGENTA}Comment {i+1}: {comment_element.text}{Style.RESET_ALL}")
+                                print(f"{Fore.MAGENTA}Comment {i+1}: {comment_element.text}{Style.RESET_ALL}", flush=True)
                             except TimeoutException:
-                                print(f"{Fore.YELLOW}Less than 6 comments or no more comments found.{Style.RESET_ALL}")
+                                print(f"{Fore.YELLOW}Less than 6 comments or no more comments found.{Style.RESET_ALL}", flush=True)
                                 break
                             except Exception as e:
-                                print(f"{Fore.RED}Error scraping comment {i+1}: {e}{Style.RESET_ALL}")
+                                print(f"{Fore.RED}Error scraping comment {i+1}: {e}{Style.RESET_ALL}", flush=True)
                                 break
                         time.sleep(5) # Added 5 seconds delay
                         
                         if not comments:
-                            print(f"{Fore.YELLOW}No comments found on this post. Skipping this post and user.{Style.RESET_ALL}")
+                            print(f"{Fore.YELLOW}No comments found on this post. Skipping this post and user.{Style.RESET_ALL}", flush=True)
                             updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
                             for i, item in enumerate(followed_data):
                                 if item is user_dict:
@@ -255,20 +255,20 @@ def main():
                             break # Exit after processing one user
                         
                     # Generate a comment using GEMINI_API
-                    print(f"{Fore.YELLOW}Analyzing comments and generating a new comment...{Style.RESET_ALL}")
+                    print(f"{Fore.YELLOW}Analyzing comments and generating a new comment...{Style.RESET_ALL}", flush=True)
                     try:
                         prompt = f"Analyze the following Instagram comments and generate a new, relevant, and positive comment. Keep it concise, engaging, and ready for publication. Do not use any asterisk (*) symbols or emojis. Comments: {'; '.join(comments)}"
                         response = gemini_client.generate_content(contents=prompt)
                         generated_comment = response.text.strip()
-                        print(f"{Fore.GREEN}Generated comment: {generated_comment}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}Generated comment: {generated_comment}{Style.RESET_ALL}", flush=True)
                     except Exception as e:
-                        print(f"{Fore.RED}Error generating comment with GEMINI_API: {e}. Using a default comment.{Style.RESET_ALL}")
+                        print(f"{Fore.RED}Error generating comment with GEMINI_API: {e}. Using a default comment.{Style.RESET_ALL}", flush=True)
                         generated_comment = "Great post!"
                     time.sleep(5) # Added 5 seconds delay
 
                     # Post the comment
                     try:
-                        print(f"{Fore.YELLOW}Attempting to post the comment...{Style.RESET_ALL}")
+                        print(f"{Fore.YELLOW}Attempting to post the comment...{Style.RESET_ALL}", flush=True)
                         # Re-locate comment_textarea before interacting
                         comment_textarea = WebDriverWait(browser, 10).until(
                             EC.presence_of_element_located((By.CSS_SELECTOR, COMMENT_TEXTAREA_CSS_SELECTOR))
@@ -289,11 +289,11 @@ def main():
                             EC.element_to_be_clickable((By.XPATH, POST_BUTTON_XPATH))
                         )
                         post_button.click()
-                        print(f"{Fore.GREEN}Comment posted successfully.{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}Comment posted successfully.{Style.RESET_ALL}", flush=True)
                         time.sleep(5) # Wait for comment to be posted
 
                         # Update followed_unfollowed.json after successful comment
-                        print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} after successful comment...{Style.RESET_ALL}")
+                        print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} after successful comment...{Style.RESET_ALL}", flush=True)
                         updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
                         for i, item in enumerate(followed_data):
                             if item is user_dict:
@@ -301,23 +301,23 @@ def main():
                                 break
                         with open('followed_unfollowed.json', 'w') as f:
                             json.dump(followed_data, f, indent=4)
-                        print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}", flush=True)
                         user_processed = True
                         break # Exit after processing one user
 
                     except TimeoutException as e:
                         if "textarea[placeholder='Add a comment…']" in str(e):
-                            print(f"{Fore.RED}Error: Comment text area not found or not clickable. CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR}. XPath Fallback: {COMMENT_TEXTAREA_FALLBACK_XPATH}. Error: {e}{Style.RESET_ALL}")
+                            print(f"{Fore.RED}Error: Comment text area not found or not clickable. CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR}. XPath Fallback: {COMMENT_TEXTAREA_FALLBACK_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
                         elif POST_BUTTON_XPATH in str(e):
-                            print(f"{Fore.RED}Error: Post button not found or not clickable. XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}")
+                            print(f"{Fore.RED}Error: Post button not found or not clickable. XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
                         else:
-                            print(f"{Fore.RED}Timeout error while posting comment: {e}{Style.RESET_ALL}")
+                            print(f"{Fore.RED}Timeout error while posting comment: {e}{Style.RESET_ALL}", flush=True)
                     except StaleElementReferenceException as e:
-                        print(f"{Fore.RED}Stale element reference error while posting comment. This often means the page changed after an element was found. The problematic locators are likely: CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR} or XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}")
+                        print(f"{Fore.RED}Stale element reference error while posting comment. This often means the page changed after an element was found. The problematic locators are likely: CSS Selector: {COMMENT_TEXTAREA_CSS_SELECTOR} or XPath: {POST_BUTTON_XPATH}. Error: {e}{Style.RESET_ALL}", flush=True)
                     except Exception as e:
-                        print(f"{Fore.RED}Error posting comment: {e}{Style.RESET_ALL}")
+                        print(f"{Fore.RED}Error posting comment: {e}{Style.RESET_ALL}", flush=True)
                         # In case of an error, still mark the user as processed to avoid re-attempting the same problematic post
-                        print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} due to error...{Style.RESET_ALL}")
+                        print(f"{Fore.YELLOW}Updating followed_unfollowed.json for {username} due to error...{Style.RESET_ALL}", flush=True)
                         updated_user_dict = reorder_user_dict_keys(user_dict, username, post_to_process)
                         for i, item in enumerate(followed_data):
                             if item is user_dict:
@@ -325,7 +325,7 @@ def main():
                                 break
                         with open('followed_unfollowed.json', 'w') as f:
                             json.dump(followed_data, f, indent=4)
-                        print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}Updated followed_unfollowed.json for {username}.{Style.RESET_ALL}", flush=True)
                         user_processed = True
                         break # Exit after processing one user
                 
@@ -336,23 +336,23 @@ def main():
                 break # Exit the outer loop if a user was processed
 
         if not user_processed:
-            print(f"{Fore.YELLOW}No users found with '_liked_commented': false or no suitable posts found. Exiting.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}No users found with '_liked_commented': false or no suitable posts found. Exiting.{Style.RESET_ALL}", flush=True)
 
     except FileNotFoundError as e:
-        print(f"{Fore.RED}Error: Required file not found - {e}. Please ensure all necessary files are in the current directory.{Style.RESET_ALL}")
+        print(f"{Fore.RED}Error: Required file not found - {e}. Please ensure all necessary files are in the current directory.{Style.RESET_ALL}", flush=True)
     except json.JSONDecodeError:
-        print(f"{Fore.RED}Error: Could not decode followed_unfollowed.json. Please check if it's a valid JSON file.{Style.RESET_ALL}")
+        print(f"{Fore.RED}Error: Could not decode followed_unfollowed.json. Please check if it's a valid JSON file.{Style.RESET_ALL}", flush=True)
     except Exception as e:
-        print(f"{Fore.RED}An unexpected error occurred: {e}{Style.RESET_ALL}")
+        print(f"{Fore.RED}An unexpected error occurred: {e}{Style.RESET_ALL}", flush=True)
         import traceback
         traceback.print_exc()
     finally:
         if browser:
-            print(f"{Fore.CYAN}Waiting 15 seconds before closing browser...{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}Waiting 15 seconds before closing browser...{Style.RESET_ALL}", flush=True)
             time.sleep(15)
             browser.quit()
-            print(f"{Fore.CYAN}Browser closed.{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Script finished.{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}Browser closed.{Style.RESET_ALL}", flush=True)
+        print(f"{Fore.CYAN}Script finished.{Style.RESET_ALL}", flush=True)
 
 if __name__ == "__main__":
     main()
