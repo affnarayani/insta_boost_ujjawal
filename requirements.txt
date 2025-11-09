@@ -1,14 +1,16 @@
 beautifulsoup4
 colorama
 cryptography
+google-generativeai
 h11==0.16.0
 idna==3.11
+moviepy==1.0.3
 outcome==1.3.0.post0
 packaging==25.0
 Pillow
 pycparser==2.23
-PySocks==1.7.1
 python-dotenv==1.2.1
+PySocks==1.7.1
 requests==2.32.5
 selenium==4.38.0
 sniffio==1.3.1
@@ -20,4 +22,3 @@ urllib3==2.5.0
 webdriver-manager==4.0.2
 websocket-client==1.9.0
 wsproto==1.2.0
-google-generativeai
