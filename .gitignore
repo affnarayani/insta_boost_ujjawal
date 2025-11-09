@@ -10,7 +10,6 @@ venv/
 
 # Sensitive files
 encrypt.py
-encrypt_meta.py
 password_generator.py
 cookies.json
 
