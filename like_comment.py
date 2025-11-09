@@ -203,7 +203,7 @@ def main():
                         found_commentable_post = False
                         last_scroll_height = 0
                         posts_checked_count = 0
-                        MAX_POSTS_TO_CHECK = 10
+                        MAX_POSTS_TO_CHECK = 3
 
                         while True:
                             # Navigate to the profile page if not already there (after returning from a post)
