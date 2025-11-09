@@ -115,7 +115,7 @@ def login_to_instagram(username): # Renamed function and added username paramete
         print("Cookies loaded and page refreshed.")
         
         # Keep the browser open for a few seconds to verify
-        time.sleep(5) # Reduced sleep time
+        time.sleep(15) # Reduced sleep time
 
         # Check for the specified XPath and click it if it appears
         try:
@@ -125,7 +125,17 @@ def login_to_instagram(username): # Renamed function and added username paramete
             print("Clicked the pop-up notification.")
             time.sleep(2) # Wait a bit after clicking
         except NoSuchElementException:
-            print("XPath element to click not found, skipping click.")
+            print("First XPath element not found, trying fallback XPath.")
+            try:
+                fallback_click_xpath = "/html/body/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]"
+                element_to_click = driver.find_element(By.XPATH, fallback_click_xpath)
+                element_to_click.click()
+                print("Clicked the pop-up notification using fallback XPath.")
+                time.sleep(2) # Wait a bit after clicking
+            except NoSuchElementException:
+                print("Fallback XPath element to click not found, skipping click.")
+            except Exception as fallback_click_e:
+                print(f"An unexpected error occurred while trying to click the fallback element: {fallback_click_e}")
         except Exception as click_e:
             print(f"An unexpected error occurred while trying to click the element: {click_e}")
         
@@ -158,8 +168,13 @@ if __name__ == "__main__":
     # Assuming config.json has a 'username' key at the top level
     try:
         with open('config.json', 'r') as f:
-            config = json.load(f)
-        test_username = config.get('username')
+            config_list = json.load(f)
+        test_username = None
+        for item in config_list:
+            if 'username' in item:
+                test_username = item['username']
+                break
+        
         if test_username:
             driver_instance = login_to_instagram(test_username)
             if driver_instance:
