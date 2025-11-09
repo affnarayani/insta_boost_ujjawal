@@ -1,4 +1,4 @@
-name: Pin Download and Process
+name: 1. Pin Download and Process
 
 on:
   workflow_dispatch:
