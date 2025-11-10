@@ -4,6 +4,7 @@ cryptography
 google-generativeai
 h11==0.16.0
 idna==3.11
+matplotlib
 moviepy==1.0.3
 outcome==1.3.0.post0
 packaging==25.0
