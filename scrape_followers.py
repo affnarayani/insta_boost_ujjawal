@@ -162,7 +162,7 @@ def scrape_followers(driver, target_username):
 
             # Scroll down
             driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scrollable_element)
-            time.sleep(5) # Wait for new content to load.
+            time.sleep(15) # Wait for new content to load.
 
             new_height = driver.execute_script("return arguments[0].scrollHeight", scrollable_element)
             if new_height == last_height:
