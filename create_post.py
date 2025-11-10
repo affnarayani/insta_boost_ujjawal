@@ -213,7 +213,7 @@ if __name__ == "__main__":
         client = genai.GenerativeModel("gemini-2.5-flash")
 
         # Generate description using Gemini API
-        prompt = "Generate an Instagram post description in max 12 words, in Hinglish, without inverted commas, asterisks, or emojis. Also, provide relevant hashtags. The context for all posts is: iss Instagram account mein main mahakaal aur jyotirling ke photos / videos upload karta hoon. har post aisa hi hone wala hai."
+        prompt = "Generate an Instagram post description in max 12 words, in Hinglish, without inverted commas, asterisks, or emojis. Combine the description and relevant hashtags into a single string, ready for posting. Do not include 'Description:' or 'Hashtags:' labels, or any asterisks. The context for all posts is: iss Instagram account mein main mahakaal aur jyotirling ke photos / videos upload karta hoon. har post aisa hi hone wala hai."
         
         print("Generating description using Gemini API...", flush=True)
         response = client.generate_content(prompt)
