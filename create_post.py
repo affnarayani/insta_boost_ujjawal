@@ -120,12 +120,25 @@ def create_instagram_post(driver, video_path, description):
 
         # Add description
         print("Attempting to add description...", flush=True)
-        description_textarea_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[2]/div/div/div/div[1]/div[2]/div/div[1]/div[1]"
-        description_textarea = WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, description_textarea_xpath))
-        )
-        description_textarea.click()
-        print("Clicked description textarea.", flush=True)
+        description_textarea_found = False
+        description_textarea = None # Initialize description_textarea
+        for k in range(1, 10): # Try k from 1 to 9
+            description_textarea_xpath = f"/html/body/div[{k}]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[2]/div/div/div/div[1]/div[2]/div/div[1]/div[1]"
+            try:
+                description_textarea = WebDriverWait(driver, 5).until( # Shorter wait time for each attempt
+                    EC.element_to_be_clickable((By.XPATH, description_textarea_xpath))
+                )
+                description_textarea.click()
+                print(f"Clicked description textarea with k={k}.", flush=True)
+                description_textarea_found = True
+                break
+            except (TimeoutException, NoSuchElementException):
+                print(f"Description textarea not found with k={k}, trying next...", flush=True)
+                continue
+        
+        if not description_textarea_found:
+            raise NoSuchElementException("Description textarea not found after trying all k values.")
+
         for char in description:
             description_textarea.send_keys(char)
             time.sleep(0.1) # Simulate human typing speed
@@ -134,10 +147,22 @@ def create_instagram_post(driver, video_path, description):
 
         # Click 'Share' button
         print("Attempting to click 'Share' button...", flush=True)
-        share_button_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[1]/div/div/div/div[3]/div/div"
-        WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, share_button_xpath))
-        ).click()
+        share_button_found = False
+        for k in range(1, 10): # Try k from 1 to 9
+            share_button_xpath = f"/html/body/div[{k}]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[1]/div/div/div/div[3]/div/div"
+            try:
+                WebDriverWait(driver, 5).until( # Shorter wait time for each attempt
+                    EC.element_to_be_clickable((By.XPATH, share_button_xpath))
+                ).click()
+                print(f"Clicked 'Share' button with k={k}.", flush=True)
+                share_button_found = True
+                break
+            except (TimeoutException, NoSuchElementException):
+                print(f"'Share' button not found with k={k}, trying next...", flush=True)
+                continue
+
+        if not share_button_found:
+            raise NoSuchElementException("'Share' button not found after trying all k values.")
         print("Clicked 'Share' button. Post is being shared...", flush=True)
         time.sleep(60) # Give time for the post to upload and share
 
