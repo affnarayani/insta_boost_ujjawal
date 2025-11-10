@@ -63,7 +63,8 @@ def create_instagram_post(driver, video_path, description):
 
         # Locate and click the image resize button
         print("Attempting to find and click the image resize button...", flush=True)
-        image_resize_button_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/div[2]/div/button/div"
+        time.sleep(120)
+        image_resize_button_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/div[2]/div/button"
         WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, image_resize_button_xpath))
         ).click()
