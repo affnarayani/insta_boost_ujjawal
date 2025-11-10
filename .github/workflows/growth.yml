@@ -1,0 +1,40 @@
+name: Instagram Growth Tracker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run get_info.py
+      run: python get_info.py
+      env:
+        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }} # Pass DECRYPT_KEY if login.py needs it
+
+    - name: Run get_info_graph.py
+      run: python get_info_graph.py
+
+    - name: Commit and push changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add growth.json graphs/instagram_growth_graph.png
+        git commit -m "Automated: Update Instagram growth data and graph" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

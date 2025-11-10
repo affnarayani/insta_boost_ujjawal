@@ -13,17 +13,17 @@ def plot_growth_graph(json_file='growth.json', output_dir='graphs'):
         output_dir (str): Directory to save the generated graph.
     """
     if not os.path.exists(json_file):
-        print(f"Error: {json_file} not found.")
+        print(f"Error: {json_file} not found.", flush=True)
         return
 
     try:
         with open(json_file, 'r') as f:
             data = json.load(f)
     except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {json_file}. Check file format.")
+        print(f"Error: Could not decode JSON from {json_file}. Check file format.", flush=True)
         return
     except Exception as e:
-        print(f"An error occurred while reading {json_file}: {e}")
+        print(f"An error occurred while reading {json_file}: {e}", flush=True)
         return
 
     dates = []
@@ -36,11 +36,11 @@ def plot_growth_graph(json_file='growth.json', output_dir='graphs'):
                 dates.append(datetime.strptime(date_str, '%d-%m-%Y'))
                 followers.append(count)
             except ValueError:
-                print(f"Warning: Skipping invalid date format '{date_str}' in {json_file}. Expected dd-mm-yyyy.")
+                print(f"Warning: Skipping invalid date format '{date_str}' in {json_file}. Expected dd-mm-yyyy.", flush=True)
                 continue
 
     if not dates:
-        print("No valid data found to plot.")
+        print("No valid data found to plot.", flush=True)
         return
 
     # Sort data by date to ensure correct plotting
@@ -67,7 +67,7 @@ def plot_growth_graph(json_file='growth.json', output_dir='graphs'):
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, 'instagram_growth_graph.png')
     plt.savefig(output_path)
-    print(f"Graph saved successfully to {output_path}")
+    print(f"Graph saved successfully to {output_path}", flush=True)
     plt.show() # Display the graph
 
 if __name__ == "__main__":
