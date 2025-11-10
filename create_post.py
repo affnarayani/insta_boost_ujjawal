@@ -63,21 +63,42 @@ def create_instagram_post(driver, video_path, description):
 
         # Locate and click the image resize button
         print("Attempting to find and click the image resize button...", flush=True)
-        time.sleep(120)
-        image_resize_button_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/div[2]/div/button"
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, image_resize_button_xpath))
-        ).click()
-        print("Clicked image resize button.", flush=True)
+        image_resize_button_found = False
+        for j in range(1, 10): # Try j from 1 to 9
+            image_resize_button_xpath = f"/html/body/div[{j}]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/div[2]/div/button/div"
+            try:
+                WebDriverWait(driver, 5).until( # Shorter wait time for each attempt
+                    EC.element_to_be_clickable((By.XPATH, image_resize_button_xpath))
+                ).click()
+                print(f"Clicked image resize button with j={j}.", flush=True)
+                image_resize_button_found = True
+                break
+            except (TimeoutException, NoSuchElementException):
+                print(f"Image resize button not found with j={j}, trying next...", flush=True)
+                continue
+        
+        if not image_resize_button_found:
+            raise NoSuchElementException("Image resize button not found after trying all j values.")
         time.sleep(5)
 
         # Locate and click the "Original" button in the pop-up
         print("Attempting to find and click the 'Original' button...", flush=True)
-        original_button_xpath = "/html/body/div[5]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/div[1]/div/div[1]/div"
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, original_button_xpath))
-        ).click()
-        print("Clicked 'Original' button.", flush=True)
+        original_button_found = False
+        for j in range(1, 10): # Try j from 1 to 9
+            original_button_xpath = f"/html/body/div[{j}]/div[1]/div/div[3]/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/div[1]/div/div[1]/div"
+            try:
+                WebDriverWait(driver, 5).until( # Shorter wait time for each attempt
+                    EC.element_to_be_clickable((By.XPATH, original_button_xpath))
+                ).click()
+                print(f"Clicked 'Original' button with j={j}.", flush=True)
+                original_button_found = True
+                break
+            except (TimeoutException, NoSuchElementException):
+                print(f"'Original' button not found with j={j}, trying next...", flush=True)
+                continue
+
+        if not original_button_found:
+            raise NoSuchElementException("'Original' button not found after trying all j values.")
         time.sleep(5) # Wait for 5 seconds after clicking "Original" button
 
         # Click 'Next' button
