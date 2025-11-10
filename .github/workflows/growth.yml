@@ -1,4 +1,4 @@
-name: Instagram Growth Tracker
+name: 0. Instagram Growth Tracker
 
 on:
   workflow_dispatch:
