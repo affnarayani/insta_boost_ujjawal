@@ -13,6 +13,7 @@ from login import login_to_instagram
 FOLLOWING_BUTTON_XPATH = "/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[2]/div[1]/section/main/div/div/header/section[1]/div/div/div/div/div[1]/button"
 DYNAMIC_POPUP_XPATH = "/html/body/div[4]/div[2]/div/div/div[1]/div/div[2]/div/div/div"
 UNFOLLOW_BUTTON_XPATH = "/html/body/div[4]/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div/div[8]/div[1]"
+USER_NOT_AVAILABLE_XPATH = "/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div/div[1]/div[2]/span"
 
 def unfollow_account():
     print("Starting unfollow process...", flush=True)
@@ -120,6 +121,23 @@ def unfollow_account():
         time.sleep(15) # Give time for the page to load
 
         try:
+            # Check if the profile is not available
+            try:
+                user_not_available_element = driver.find_element(By.XPATH, USER_NOT_AVAILABLE_XPATH)
+                if "Profile isn't available" in user_not_available_element.text:
+                    print(f"Profile for {username_prefix} isn't available. Skipping unfollow.", flush=True)
+                    # Update followed_unfollowed.json
+                    followed_data[eligible_account_index][f"{username_prefix}_unfollowed"] = True
+                    followed_data[eligible_account_index]['timestamp'] = datetime.now().isoformat()
+                    with open('followed_unfollowed.json', 'w') as f:
+                        json.dump(followed_data, f, indent=4)
+                    print(f"Updated status for {username_prefix} as unfollowed in followed_unfollowed.json", flush=True)
+                    driver.quit()
+                    print("Browser closed. Unfollow process finished for this account.", flush=True)
+                    return # Skip unfollow and exit
+            except NoSuchElementException:
+                pass # Profile is available, continue with unfollow
+
             # Click 'Following' button
             print("Clicking 'Following' button...", flush=True)
             following_button = WebDriverWait(driver, 10).until(
